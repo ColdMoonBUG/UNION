@@ -156,6 +156,19 @@ public class JusicProperties {
         private String switchMusicEnable ="switch_music_enable";
         private String searchMusicEnable ="search_music_enable";
         private String goodModel = "good_model";
+        private String playMode = "play_mode";
+        /**
+         * 房间信息
+         */
+        private String houseHash = "jusic_house";
+        /**
+         * 房间配置
+         */
+        private String roomConfigHash = "jusic_room_config";
+        /**
+         * 房间 AV 播放状态
+         */
+        private String avPlaybackHash = "jusic_av_playback";
         /**
          * 投票通过率, config 子键名
          */
@@ -187,16 +200,51 @@ public class JusicProperties {
             return this.pickList + "_" + jusicEnvironment.getServerPort();
         }
 
+        public String getPickList(String roomId) {
+            return this.getPickList() + "_" + this.normalizeRoomId(roomId);
+        }
+
         public String getPlayingList() {
             return this.playingList + "_" + jusicEnvironment.getServerPort();
+        }
+
+        public String getPlayingList(String roomId) {
+            return this.getPlayingList() + "_" + this.normalizeRoomId(roomId);
         }
 
         public String getBlackSet() {
             return blackSet + "_" + jusicEnvironment.getServerPort();
         }
 
+        public String getHouseHash() {
+            return this.houseHash + "_" + jusicEnvironment.getServerPort();
+        }
+
+        public String getRoomConfigHash() {
+            return this.roomConfigHash + "_" + jusicEnvironment.getServerPort();
+        }
+
+        public String getRoomConfigHash(String roomId) {
+            return this.getRoomConfigHash() + "_" + this.normalizeRoomId(roomId);
+        }
+
         public String getSkipSet() {
             return this.skipSet + "_" + jusicEnvironment.getServerPort();
+        }
+
+        public String getSkipSet(String roomId) {
+            return this.getSkipSet() + "_" + this.normalizeRoomId(roomId);
+        }
+
+        public String getAvPlaybackHash() {
+            return this.avPlaybackHash + "_" + jusicEnvironment.getServerPort();
+        }
+
+        private String normalizeRoomId(String roomId) {
+            if (roomId == null || "".equals(roomId.trim())) {
+                return "default";
+            }
+            return roomId.trim();
         }
     }
 

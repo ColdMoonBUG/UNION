@@ -4,6 +4,8 @@ import com.scoder.jusic.model.MessageType;
 import com.scoder.jusic.model.User;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.List;
+
 /**
  * @author H
  */
@@ -55,6 +57,15 @@ public interface SessionService {
     void send(MessageType messageType, Object payload);
 
     /**
+     * send message to room.
+     *
+     * @param roomId      room id
+     * @param messageType message type
+     * @param payload     payload
+     */
+    void sendRoom(String roomId, MessageType messageType, Object payload);
+
+    /**
      * send message.
      *
      * @param sessionId session id
@@ -95,6 +106,38 @@ public interface SessionService {
      * @return nick name
      */
     String getNickName(String sessionId);
+
+    /**
+     * get room id
+     *
+     * @param sessionId the client session
+     * @return room id
+     */
+    String getRoomId(String sessionId);
+
+    /**
+     * switch room
+     *
+     * @param sessionId session id
+     * @param roomId room id
+     * @return previous room id
+     */
+    String switchRoom(String sessionId, String roomId);
+
+    /**
+     * list room users
+     *
+     * @param roomId room id
+     * @return users
+     */
+    List<User> listUsers(String roomId);
+
+    /**
+     * list active room ids
+     *
+     * @return room ids
+     */
+    List<String> listRoomIds();
 
     /**
      * 最后发言时间
@@ -143,5 +186,13 @@ public interface SessionService {
      * @return long
      */
     Long size();
+
+    /**
+     * room size
+     *
+     * @param roomId room id
+     * @return long
+     */
+    Long size(String roomId);
 
 }

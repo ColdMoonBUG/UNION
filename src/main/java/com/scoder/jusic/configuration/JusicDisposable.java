@@ -18,14 +18,18 @@ public class JusicDisposable implements DisposableBean {
     private final MusicPlayingRepository musicPlayingRepository;
     private final MusicPickRepository musicPickRepository;
     private final MusicVoteRepository musicVoteRepository;
+    private final HouseRepository houseRepository;
+    private final AvPlaybackStateRepository avPlaybackStateRepository;
 
-    public JusicDisposable(ConfigRepository configRepository, SessionRepository sessionRepository, MusicDefaultRepository musicDefaultRepository, MusicPlayingRepository musicPlayingRepository, MusicPickRepository musicPickRepository, MusicVoteRepository musicVoteRepository) {
+    public JusicDisposable(ConfigRepository configRepository, SessionRepository sessionRepository, MusicDefaultRepository musicDefaultRepository, MusicPlayingRepository musicPlayingRepository, MusicPickRepository musicPickRepository, MusicVoteRepository musicVoteRepository, HouseRepository houseRepository, AvPlaybackStateRepository avPlaybackStateRepository) {
         this.configRepository = configRepository;
         this.sessionRepository = sessionRepository;
         this.musicDefaultRepository = musicDefaultRepository;
         this.musicPlayingRepository = musicPlayingRepository;
         this.musicPickRepository = musicPickRepository;
         this.musicVoteRepository = musicVoteRepository;
+        this.houseRepository = houseRepository;
+        this.avPlaybackStateRepository = avPlaybackStateRepository;
     }
 
     @Override
@@ -37,6 +41,8 @@ public class JusicDisposable implements DisposableBean {
         musicPlayingRepository.destroy();
         musicPickRepository.destroy();
         musicVoteRepository.destroy();
+        houseRepository.destroy();
+        avPlaybackStateRepository.destroy();
         log.info("销毁工作完成");
     }
 

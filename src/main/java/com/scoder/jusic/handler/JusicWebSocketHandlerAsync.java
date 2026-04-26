@@ -1,13 +1,16 @@
 package com.scoder.jusic.handler;
 
 import com.scoder.jusic.common.message.Response;
-import com.scoder.jusic.configuration.JusicProperties;
+import com.scoder.jusic.model.House;
 import com.scoder.jusic.model.MessageType;
 import com.scoder.jusic.model.Music;
+import com.scoder.jusic.model.Notice;
 import com.scoder.jusic.model.Online;
-import com.scoder.jusic.repository.MusicPlayingRepository;
+import com.scoder.jusic.service.AvService;
 import com.scoder.jusic.service.ConfigService;
+import com.scoder.jusic.service.HouseService;
 import com.scoder.jusic.service.MusicService;
+import com.scoder.jusic.service.RoomSnapshotService;
 import com.scoder.jusic.service.SessionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,48 +29,78 @@ import java.util.LinkedList;
 public class JusicWebSocketHandlerAsync {
 
     @Autowired
-    private JusicProperties musicBar;
-    @Autowired
-    private MusicPlayingRepository musicPlayingRepository;
-    @Autowired
     private SessionService sessionService;
     @Autowired
     private MusicService musicService;
     @Autowired
     private ConfigService configService;
+    @Autowired
+    private RoomSnapshotService roomSnapshotService;
+    @Autowired
+    private HouseService houseService;
+    @Autowired
+    private AvService avService;
 
     @Async
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        String roomId = this.getRoomId(session);
+        try {
+            this.validateRoomAccess(roomId, this.getHousePassword(session));
+        } catch (IllegalArgumentException e) {
+            log.info("Connection rejected: {}, room: {}, reason: {}", session.getId(), roomId, e.getMessage());
+            sessionService.send(session, MessageType.NOTICE, Response.failure((Object) null, e.getMessage()));
+            session.close(new CloseStatus(4001, e.getMessage()));
+            return;
+        }
+
         sessionService.putSession(session);
-        int size = musicBar.getSessions().size();
-        log.info("Connection established: {}, ip: {}, and now online: {}", session.getId(), session.getAttributes().get("remoteAddress").toString(), size);
+        int size = sessionService.size(roomId).intValue();
+        log.info("Connection established: {}, room: {}, ip: {}, and now online: {}", session.getId(), roomId, session.getAttributes().get("remoteAddress").toString(), size);
         Thread.sleep(500);
         sessionService.send(session, MessageType.NOTICE, Response.success((Object) null, "连接到服务器成功！"));
-        // 1. send online
-        Online online = new Online();
-        online.setCount(size);
-        sessionService.send(MessageType.ONLINE, Response.success(online));
-        // 2. send playing
-        Music playing = musicPlayingRepository.getPlaying();
-        sessionService.send(session, MessageType.MUSIC, Response.success(playing, "正在播放"));
-        // 3. send pick list
-        LinkedList<Music> pickList = musicService.getPickList();
-        if(configService.getGoodModel() != null && configService.getGoodModel()) {
-            sessionService.send(session, MessageType.PICK, Response.success(pickList, "goodlist"));
-        }else{
-            sessionService.send(session, MessageType.PICK, Response.success(pickList, "播放列表"));
-        }
-        log.info("发现有客户端连接, 已向该客户端: {} 发送正在播放的音乐: {}, 以及播放列表, 共 {} 首", session.getId(), playing.getName(), pickList.size());
+        roomSnapshotService.broadcastOnline(roomId);
+        sessionService.sendRoom(roomId, MessageType.HOUSE_USER, Response.success(houseService.listUsers(roomId), "房间成员"));
+        roomSnapshotService.sendRoomSnapshot(session.getId(), roomId, true);
+        Music playing = musicService.getPlaying(roomId);
+        String playingName = playing == null ? "null" : playing.getName();
+        log.info("发现有客户端连接, 房间: {}, 已向该客户端: {} 发送正在播放的音乐: {}, 以及播放列表, 共 {} 首", roomId, session.getId(), playingName, musicService.getPickList(roomId).size());
     }
 
     @Async
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
+        boolean activeSession = sessionService.getUser(session.getId()) != null;
+        String roomId = activeSession ? sessionService.getRoomId(session.getId()) : this.getRoomId(session);
         sessionService.clearSession(session);
-        int size = musicBar.getSessions().size();
-        log.info("Connection closed: {}, and now online: {}", session.getId(), size);
-        Online online = new Online();
-        online.setCount(size);
-        sessionService.send(MessageType.ONLINE, Response.success(online, null));
+        if (!activeSession) {
+            return;
+        }
+        int size = sessionService.size(roomId).intValue();
+        log.info("Connection closed: {}, room: {}, and now online: {}", session.getId(), roomId, size);
+        if (size <= 0) {
+            avService.clearPlaybackState(roomId);
+        }
+        roomSnapshotService.broadcastOnline(roomId);
+        sessionService.sendRoom(roomId, MessageType.HOUSE_USER, Response.success(houseService.listUsers(roomId), "房间成员"));
+    }
+
+    private void validateRoomAccess(String roomId, String password) {
+        if (roomId == null || "default".equals(roomId)) {
+            return;
+        }
+        houseService.enter(roomId, password);
+    }
+
+    private String getRoomId(WebSocketSession session) {
+        Object roomId = session.getAttributes().get("roomId");
+        if (roomId == null || "".equals(roomId.toString().trim())) {
+            return "default";
+        }
+        return roomId.toString().trim();
+    }
+
+    private String getHousePassword(WebSocketSession session) {
+        Object housePwd = session.getAttributes().get("housePwd");
+        return housePwd == null ? "" : housePwd.toString().trim();
     }
 
 }

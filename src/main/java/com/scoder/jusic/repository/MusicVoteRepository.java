@@ -7,37 +7,15 @@ import java.util.Set;
  */
 public interface MusicVoteRepository {
 
-    /**
-     * destroy
-     *
-     * @return -
-     */
     Long destroy();
 
-    /**
-     * add to set
-     *
-     * @param value value
-     * @return -
-     */
-    Long add(Object... value);
+    Long destroy(String roomId);
 
-    /**
-     * size
-     *
-     * @return -
-     */
-    Long size();
+    Long add(String roomId, Object... value);
 
-    /**
-     * 清空 set
-     */
-    void reset();
+    Long size(String roomId);
 
-    /**
-     * members
-     *
-     * @return -
-     */
-    Set members();
+    void reset(String roomId);
+
+    Set members(String roomId);
 }

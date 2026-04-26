@@ -38,6 +38,10 @@ public class User implements Serializable {
      */
     private String role = "default";
     /**
+     * 所属房间
+     */
+    private String roomId = "default";
+    /**
      * 最后时间..
      */
     private Long lastMessageTime;

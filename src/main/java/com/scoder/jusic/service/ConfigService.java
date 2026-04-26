@@ -5,24 +5,23 @@ package com.scoder.jusic.service;
  */
 public interface ConfigService {
 
-    /**
-     * set push switch
-     *
-     * @param pushSwitch boolean
-     */
-    void setPushSwitch(boolean pushSwitch);
+    void setPushSwitch(String roomId, boolean pushSwitch);
 
-    void setEnableSwitch(boolean enableSwitch);
+    void setEnableSwitch(String roomId, boolean enableSwitch);
 
-    void setEnableSearch(boolean enableSearch);
+    void setEnableSearch(String roomId, boolean enableSearch);
 
-    Boolean getEnableSearch();
+    Boolean getEnableSearch(String roomId);
 
-    Boolean getEnableSwitch();
+    Boolean getEnableSwitch(String roomId);
 
-    Float getVoteRate();
+    Float getVoteRate(String roomId);
 
-    Boolean getGoodModel();
-    void setGoodModel(boolean goodModel);
+    Boolean getGoodModel(String roomId);
 
+    void setGoodModel(String roomId, boolean goodModel);
+
+    String getPlayMode(String roomId);
+
+    void setPlayMode(String roomId, String playMode);
 }

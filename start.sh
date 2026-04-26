@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+APP_NAME="jusic-serve"
+JAR_PATH="$ROOT_DIR/target/${APP_NAME}.jar"
+LOG_DIR="$ROOT_DIR/logs"
+PID_FILE="$LOG_DIR/${APP_NAME}.pid"
+LOG_FILE="$LOG_DIR/${APP_NAME}.log"
+
+mkdir -p "$LOG_DIR"
+
+if [[ -f "$PID_FILE" ]]; then
+  OLD_PID="$(cat "$PID_FILE")"
+  if [[ -n "$OLD_PID" ]] && kill -0 "$OLD_PID" 2>/dev/null; then
+    echo "$APP_NAME 已在运行中，PID=$OLD_PID"
+    echo "日志: $LOG_FILE"
+    exit 0
+  fi
+  rm -f "$PID_FILE"
+fi
+
+if [[ ! -f "$JAR_PATH" ]]; then
+  echo "未找到 $JAR_PATH，开始打包..."
+  bash "$ROOT_DIR/mvnw" -q -DskipTests package
+fi
+
+nohup java -jar "$JAR_PATH" > "$LOG_FILE" 2>&1 &
+PID=$!
+echo "$PID" > "$PID_FILE"
+
+echo "$APP_NAME 启动成功，PID=$PID"
+echo "日志: $LOG_FILE"
+echo "停止进程: kill $PID"

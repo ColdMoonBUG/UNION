@@ -16,6 +16,10 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,6 +29,8 @@ import java.util.Set;
 @Service
 @Slf4j
 public class SessionServiceImpl implements SessionService {
+
+    private static final String DEFAULT_ROOM_ID = "default";
 
     @Autowired
     private JusicProperties jusicProperties;
@@ -65,6 +71,7 @@ public class SessionServiceImpl implements SessionService {
                 .nickName("")
                 .remoteAddress(session.getAttributes().get("remoteAddress").toString())
                 .role("default")
+                .roomId(this.getRoomId(session))
                 .build();
         sessionRepository.setSession(user);
     }
@@ -86,6 +93,17 @@ public class SessionServiceImpl implements SessionService {
         Map<String, WebSocketSession> sessions = jusicProperties.getSessions();
         sessions.forEach((key, session) -> {
             if (session.isOpen()) {
+                this.send(session, messageType, payload);
+            }
+        });
+    }
+
+    @Override
+    public void sendRoom(String roomId, MessageType messageType, Object payload) {
+        String currentRoomId = this.normalizeRoomId(roomId);
+        Map<String, WebSocketSession> sessions = jusicProperties.getSessions();
+        sessions.forEach((key, session) -> {
+            if (session.isOpen() && currentRoomId.equals(this.getRoomId(session))) {
                 this.send(session, messageType, payload);
             }
         });
@@ -133,6 +151,59 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
+    public String getRoomId(String sessionId) {
+        User session = sessionRepository.getSession(sessionId);
+        if (session != null) {
+            return this.normalizeRoomId(session.getRoomId());
+        }
+        return DEFAULT_ROOM_ID;
+    }
+
+    @Override
+    public String switchRoom(String sessionId, String roomId) {
+        User user = sessionRepository.getSession(sessionId);
+        if (user != null) {
+            String previousRoomId = this.normalizeRoomId(user.getRoomId());
+            String currentRoomId = this.normalizeRoomId(roomId);
+            user.setRoomId(currentRoomId);
+            sessionRepository.setSession(user);
+            WebSocketSession session = jusicProperties.getSessions().get(sessionId);
+            if (session != null) {
+                session.getAttributes().put("roomId", currentRoomId);
+            }
+            return previousRoomId;
+        }
+        return DEFAULT_ROOM_ID;
+    }
+
+    @Override
+    public List<User> listUsers(String roomId) {
+        List<User> result = new ArrayList<>();
+        Map<String, WebSocketSession> sessions = jusicProperties.getSessions();
+        sessions.forEach((key, session) -> {
+            if (session.isOpen() && this.normalizeRoomId(roomId).equals(this.getRoomId(session))) {
+                User user = sessionRepository.getSession(key);
+                if (user != null) {
+                    result.add(user);
+                }
+            }
+        });
+        result.sort(Comparator.comparing(User::getSessionId));
+        return result;
+    }
+
+    @Override
+    public List<String> listRoomIds() {
+        Set<String> roomIds = new LinkedHashSet<>();
+        jusicProperties.getSessions().values().forEach(session -> {
+            if (session.isOpen()) {
+                roomIds.add(this.getRoomId(session));
+            }
+        });
+        return new ArrayList<>(roomIds);
+    }
+
+    @Override
     public void setLastMessageTime(User user, Long time) {
         user.setLastMessageTime(time);
         sessionRepository.setSession(user);
@@ -171,7 +242,16 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     public Long size() {
-        return sessionRepository.size();
+        return Long.valueOf(jusicProperties.getSessions().size());
+    }
+
+    @Override
+    public Long size(String roomId) {
+        long size = jusicProperties.getSessions().values().stream()
+                .filter(WebSocketSession::isOpen)
+                .filter(session -> this.normalizeRoomId(roomId).equals(this.getRoomId(session)))
+                .count();
+        return size;
     }
 
     /**
@@ -198,6 +278,18 @@ public class SessionServiceImpl implements SessionService {
                 .append("\n")
                 .append(jsonString);
         return payload.toString();
+    }
+
+    private String getRoomId(WebSocketSession session) {
+        Object roomId = session.getAttributes().get("roomId");
+        return this.normalizeRoomId(roomId == null ? null : roomId.toString());
+    }
+
+    private String normalizeRoomId(String roomId) {
+        if (roomId == null || "".equals(roomId.trim())) {
+            return DEFAULT_ROOM_ID;
+        }
+        return roomId.trim();
     }
 
 }

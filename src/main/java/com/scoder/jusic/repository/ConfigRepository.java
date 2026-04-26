@@ -7,144 +7,65 @@ import java.util.Map;
  */
 public interface ConfigRepository {
 
-    /**
-     * destroy
-     *
-     * @return -
-     */
     Long destroy();
 
-    /**
-     * initialize
-     */
+    Long destroy(String roomId);
+
     void initialize();
 
-    /**
-     * get
-     *
-     * @param hashKey hash key
-     * @return -
-     */
     Object get(Object hashKey);
 
-    /**
-     * put
-     *
-     * @param hashKey hash key
-     * @param value   value
-     */
     void put(Object hashKey, Object value);
 
-    /**
-     * put all
-     *
-     * @param map map, k->v
-     */
     void putAll(Map<String, Object> map);
 
-    /**
-     * get password
-     *
-     * @param role role: root | admin
-     * @return password
-     */
+    Object getRoom(String roomId, Object hashKey);
+
+    void putRoom(String roomId, Object hashKey, Object value);
+
+    void putAllRoom(String roomId, Map<String, Object> map);
+
     String getPassword(String role);
 
-    /**
-     * set password
-     *
-     * @param role     role: root | admin
-     * @param password password
-     */
     void setPassword(String role, String password);
 
-    /**
-     * init root's password
-     */
     void initRootPassword();
 
-    /**
-     * init admin's password
-     */
     void initAdminPassword();
 
-    /**
-     * get root password
-     *
-     * @return password
-     */
     String getRootPassword();
 
-    /**
-     * get admin password
-     *
-     * @return password
-     */
     String getAdminPassword();
 
-    /**
-     * get last music duration
-     *
-     * @return millisecond
-     */
-    Long getLastMusicDuration();
+    Long getLastMusicDuration(String roomId);
 
-    /**
-     * set last music duration
-     *
-     * @param duration duration (millisecond)
-     */
-    void setLastMusicDuration(Long duration);
+    void setLastMusicDuration(String roomId, Long duration);
 
-    /**
-     * get last music push time.
-     *
-     * @return push time (millisecond)
-     */
-    Long getLastMusicPushTime();
+    Long getLastMusicPushTime(String roomId);
 
-    /**
-     * set last music push time.
-     *
-     * @param pushTime push time (millisecond)
-     */
-    void setLastMusicPushTime(Long pushTime);
+    void setLastMusicPushTime(String roomId, Long pushTime);
 
-    /**
-     * set last music push time and duration.
-     *
-     * @param pushTime last music push time （millisecond）
-     * @param duration last music duration （millisecond）
-     */
-    void setLastMusicPushTimeAndDuration(Long pushTime, Long duration);
+    void setLastMusicPushTimeAndDuration(String roomId, Long pushTime, Long duration);
 
-    /**
-     * get push switch.
-     *
-     * @return boolean
-     */
-    Boolean getPushSwitch();
+    Boolean getPushSwitch(String roomId);
 
-    /**
-     * set push switch
-     *
-     * @param pushSwitch push switch
-     */
-    void setPushSwitch(boolean pushSwitch);
+    void setPushSwitch(String roomId, boolean pushSwitch);
 
-    /**
-     * get vote rate
-     *
-     * @return -
-     */
-    Float getVoteRate();
+    Float getVoteRate(String roomId);
 
-    Boolean getEnableSwitch();
-    void setEnableSwitch(boolean enableSwitch);
+    Boolean getEnableSwitch(String roomId);
 
-    Boolean getEnableSearch();
-    void setEnableSearch(boolean enableSearch);
+    void setEnableSwitch(String roomId, boolean enableSwitch);
 
-    Boolean getGoodModel();
-    void setGoodModel(boolean goodModel);
+    Boolean getEnableSearch(String roomId);
+
+    void setEnableSearch(String roomId, boolean enableSearch);
+
+    Boolean getGoodModel(String roomId);
+
+    void setGoodModel(String roomId, boolean goodModel);
+
+    String getPlayMode(String roomId);
+
+    void setPlayMode(String roomId, String playMode);
 }

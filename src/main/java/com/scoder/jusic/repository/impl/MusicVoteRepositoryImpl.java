@@ -17,44 +17,59 @@ import java.util.Set;
 public class MusicVoteRepositoryImpl implements MusicVoteRepository {
 
     @Autowired
-    private JusicProperties jusicProperties;
-    @Autowired
     private JusicProperties.RedisKeys redisKeys;
     @Autowired
     private RedisTemplate redisTemplate;
 
     @Override
     public Long destroy() {
-        Set members = this.members();
-        return members != null && members.size() > 0 ? redisTemplate.opsForSet()
-                .remove(redisKeys.getSkipSet(), members.toArray()) : 0;
+        Long deleted = 0L;
+        Set keys = redisTemplate.keys(redisKeys.getSkipSet() + "_*");
+        if (keys != null) {
+            for (Object key : keys) {
+                Set members = redisTemplate.opsForSet().members(key);
+                if (members != null && members.size() > 0) {
+                    deleted += redisTemplate.opsForSet().remove(key, members.toArray());
+                }
+            }
+        }
+        return deleted;
     }
 
     @Override
-    public Long add(Object... value) {
+    public Long destroy(String roomId) {
+        Set members = this.members(roomId);
+        if (members == null || members.isEmpty()) {
+            return 0L;
+        }
+        return redisTemplate.opsForSet().remove(redisKeys.getSkipSet(roomId), members.toArray());
+    }
+
+    @Override
+    public Long add(String roomId, Object... value) {
         return redisTemplate.opsForSet()
-                .add(redisKeys.getSkipSet(), value);
+                .add(redisKeys.getSkipSet(roomId), value);
     }
 
     @Override
-    public Long size() {
+    public Long size(String roomId) {
         return redisTemplate.opsForSet()
-                .size(redisKeys.getSkipSet());
+                .size(redisKeys.getSkipSet(roomId));
     }
 
     @Override
-    public void reset() {
-        Set members = this.members();
+    public void reset(String roomId) {
+        Set members = this.members(roomId);
         if (null != members && members.size() > 0) {
             redisTemplate.opsForSet()
-                    .remove(redisKeys.getSkipSet(), members.toArray());
+                    .remove(redisKeys.getSkipSet(roomId), members.toArray());
         }
     }
 
     @Override
-    public Set members() {
+    public Set members(String roomId) {
         return redisTemplate.opsForSet()
-                .members(redisKeys.getSkipSet());
+                .members(redisKeys.getSkipSet(roomId));
     }
 
 }

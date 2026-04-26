@@ -1,1 +1,1248 @@
-<!DOCTYPE html><html lang=en><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><link rel=icon href=favicon.ico><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic"><link href=https://cdn.bootcss.com/material-design-icons/3.0.1/iconfont/material-icons.min.css rel=stylesheet><title>一起听歌吧</title><link href=css/music.40418138.css rel=prefetch><link href=js/music.e6d7dc12.js rel=prefetch><link href=css/app.c96cdf2c.css rel=preload as=style><link href=css/chunk-vendors.1380d430.css rel=preload as=style><link href=js/app.e615c8b3.js rel=preload as=script><link href=js/chunk-vendors.7625ce53.js rel=preload as=script><link href=css/chunk-vendors.1380d430.css rel=stylesheet><link href=css/app.c96cdf2c.css rel=stylesheet></head><body><noscript><strong>We're sorry but jusic-ui doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id=app></div><script src=js/chunk-vendors.7625ce53.js></script><script src=js/app.e615c8b3.js></script></body></html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNION</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;--bg2:#1e293b;--bg3:#334155;
+  --border:#334155;--border2:#475569;
+  --text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;
+  --accent:#6366f1;--accent2:#818cf8;
+  --red:#ef4444;--green:#22c55e;
+}
+html,body{min-height:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',system-ui,sans-serif;font-size:14px;overflow-y:auto}
+
+.hidden{display:none!important}
+input,select,textarea{
+  background:var(--bg2);border:1px solid var(--border);color:var(--text);
+  padding:8px 12px;border-radius:8px;font-size:14px;outline:none;
+  transition:border-color .15s;font-family:inherit;
+}
+input:focus,select:focus{border-color:var(--accent)}
+input::placeholder{color:var(--text3)}
+.btn{
+  padding:8px 18px;border-radius:8px;border:none;cursor:pointer;
+  font-size:14px;font-weight:500;transition:opacity .15s,background .15s;
+  font-family:inherit;
+}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-ghost{background:var(--bg2);color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--border2)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-sm{padding:5px 12px;font-size:13px}
+.btn-xs{padding:3px 8px;font-size:12px}
+
+/* 弹窗 */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.65);
+  display:flex;align-items:center;justify-content:center;z-index:200;
+}
+.modal{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:16px;padding:28px;width:400px;max-width:92vw;
+}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px}
+.field input,.field select{width:100%}
+.check-row{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;padding:4px 0}
+.check-row input[type=checkbox]{width:auto;cursor:pointer}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+
+/* Toast */
+#toasts{position:fixed;top:18px;right:18px;z-index:300;display:flex;flex-direction:column;gap:8px}
+.toast{
+  padding:10px 16px;border-radius:8px;font-size:13px;max-width:280px;
+  background:var(--bg2);border:1px solid var(--border);
+  animation:toastIn .2s ease;
+}
+.toast.ok{border-color:var(--green);color:#4ade80}
+.toast.err{border-color:var(--red);color:#f87171}
+@keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+
+/* 大厅 */
+#lobby{
+  min-height:100vh;display:flex;flex-direction:column;
+  max-width:1120px;margin:0 auto;padding:36px 24px 24px;
+}
+.lobby-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.logo{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.logo em{color:var(--accent2);font-style:normal}
+.lobby-bar{display:flex;gap:10px;margin-bottom:20px;align-items:center}
+.lobby-bar input{flex:1}
+.toggle{
+  display:flex;align-items:center;gap:6px;padding:8px 14px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  cursor:pointer;font-size:13px;color:var(--text2);white-space:nowrap;
+  transition:color .15s,border-color .15s;
+}
+.toggle.on{color:var(--accent2);border-color:var(--accent)}
+#rooms{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,220px));
+  justify-content:center;
+  align-content:start;
+  align-items:start;
+  grid-auto-rows:max-content;
+  gap:12px;
+  overflow-y:auto;
+  flex:0 0 auto;
+  padding:4px 0 8px;
+  width:100%;
+}
+.room-card{
+  background:#ff0000;border:1px solid #ff6b6b;border-radius:12px;
+  padding:12px 14px;cursor:pointer;transition:border-color .15s,transform .1s,box-shadow .15s;
+  width:220px;min-height:112px;max-height:112px;align-self:start;
+  display:flex;flex-direction:column;justify-content:space-between;gap:8px;overflow:hidden;
+}
+.room-card:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.16)}
+.rc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.rc-name-wrap{min-width:0;flex:1}
+.rc-name{font-weight:600;font-size:14px;display:flex;align-items:center;gap:5px;line-height:1.25;min-width:0;flex-wrap:wrap}
+.rc-desc{font-size:12px;color:var(--text2);line-height:1.4;min-height:16px;max-height:16px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.rc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto}
+.rc-enter{font-size:12px;color:var(--accent2);white-space:nowrap;flex-shrink:0}
+.rc-pop{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block}
+.dot.off{background:var(--text3)}
+.tag{font-size:11px;padding:2px 7px;border-radius:10px;background:rgba(99,102,241,.15);color:var(--accent2)}
+.empty-state{grid-column:1/-1;padding:40px 0;text-align:center;color:var(--text2)}
+
+/* 房间 */
+#room{height:100vh;min-height:0;display:flex;flex-direction:column}
+.topbar{
+  display:flex;align-items:center;flex-wrap:wrap;padding:10px 18px;gap:10px 14px;
+  border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;min-height:50px;
+}
+.topbar-name{font-weight:600;font-size:15px;white-space:nowrap}
+.topbar-desc{font-size:12px;color:var(--text2);flex:1 1 240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.online{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text2);white-space:nowrap}
+.my-nick{font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap}
+.my-nick:hover{color:var(--text)}
+.announce{
+  padding:6px 18px;font-size:13px;color:var(--accent2);
+  background:rgba(99,102,241,.08);border-bottom:1px solid rgba(99,102,241,.2);flex-shrink:0;
+}
+.room-body{
+  display:grid;
+  grid-template-columns:minmax(240px,300px) minmax(0,1fr);
+  grid-template-areas:
+    'player queue'
+    'player chat';
+  gap:12px;
+  flex:1;
+  min-width:0;
+  min-height:0;
+  padding:12px;
+  overflow:auto;
+  align-items:start;
+}
+
+/* 卡片通用 */
+.player-col,.queue-col,.chat-col{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:14px;
+  min-height:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  box-shadow:0 10px 24px rgba(0,0,0,.16);
+}
+
+/* 播放器栏 */
+.player-col{grid-area:player;min-width:0;position:sticky;top:0}
+.cover-wrap{padding:16px 16px 0;flex-shrink:0}
+.cover-img{width:100%;aspect-ratio:1;border-radius:10px;object-fit:cover;display:block}
+.cover-ph{width:100%;aspect-ratio:1;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:44px;color:var(--text3)}
+.music-meta{padding:12px 16px 0;flex-shrink:0}
+.music-title{font-weight:600;font-size:15px;line-height:1.35;margin-bottom:3px}
+.music-artist{font-size:12px;color:var(--text2);margin-bottom:2px}
+.music-picker{font-size:11px;color:var(--text3)}
+.progress{padding:10px 16px 0;flex-shrink:0}
+.prog-bar{height:4px;background:var(--bg3);border-radius:2px;cursor:pointer;margin-bottom:4px;position:relative;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .5s linear}
+.prog-time{display:flex;justify-content:space-between;font-size:11px;color:var(--text3)}
+.lyrics{flex:1;min-height:0;max-height:220px;overflow-y:auto;padding:10px 16px;font-size:13px;line-height:2;text-align:center;color:var(--text3)}
+.lrc-line{transition:color .3s;padding:0 2px}
+.lrc-line.cur{color:var(--text);font-weight:500}
+.player-ctrl{padding:10px 16px 14px;flex-shrink:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mode-tag{padding:4px 10px;border-radius:20px;background:var(--bg3);font-size:12px;color:var(--text2);cursor:default}
+.skip-btn{padding:4px 12px;border-radius:20px;background:var(--bg2);border:1px solid var(--border);font-size:12px;color:var(--text);cursor:pointer;transition:border-color .15s}
+.skip-btn:hover{border-color:var(--accent)}
+
+/* 队列栏 */
+.queue-col{grid-area:queue;min-width:0;min-height:360px}
+.col-head{padding:12px 14px 10px;font-size:13px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.search-row{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+.search-row input{flex:1;padding:7px 10px;font-size:13px;min-width:0}
+.search-row select{padding:6px 8px;font-size:13px;flex-shrink:0}
+.queue-list{flex:1;min-height:0;overflow-y:auto}
+.song-row{display:flex;align-items:center;padding:9px 12px;gap:10px;border-bottom:1px solid rgba(51,65,85,.4);transition:background .1s;min-width:0}
+.song-row:hover{background:var(--bg2)}
+.song-n{width:18px;text-align:center;font-size:12px;color:var(--text3);flex-shrink:0}
+.song-cov{width:38px;height:38px;border-radius:6px;object-fit:cover;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:16px}
+.song-cov img{width:100%;height:100%;border-radius:6px;object-fit:cover}
+.song-info{flex:1;min-width:0}
+.song-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.song-meta2{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song-acts{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.ico-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:14px;border-radius:4px;line-height:1;transition:color .15s}
+.ico-btn:hover{color:var(--text)}
+.ico-btn.del:hover{color:var(--red)}
+.search-panel{border-top:1px solid var(--border);flex-shrink:0;max-height:260px;overflow-y:auto;background:var(--bg)}
+.sr-row{display:flex;align-items:center;padding:8px 12px;gap:10px;cursor:pointer;border-bottom:1px solid rgba(51,65,85,.3);transition:background .1s;min-width:0}
+.sr-row:hover{background:var(--bg2)}
+.sr-add{color:var(--accent2);font-size:18px;flex-shrink:0;line-height:1}
+
+/* 聊天栏 */
+.chat-col{grid-area:chat;min-width:0;min-height:320px}
+.users-wrap{padding:8px 10px;display:flex;flex-wrap:wrap;gap:5px;border-bottom:1px solid var(--border);max-height:76px;overflow-y:auto}
+.u-chip{padding:2px 8px;border-radius:20px;font-size:12px;background:var(--bg3);color:var(--text2);white-space:nowrap}
+.u-chip.admin{background:rgba(99,102,241,.2);color:var(--accent2)}
+.u-chip.root{background:rgba(239,68,68,.2);color:#f87171}
+.u-chip.me{border:1px solid var(--accent)}
+.messages{flex:1;min-height:0;max-height:none;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px}
+.msg{font-size:13px;line-height:1.5}
+.msg-nick{font-weight:500;color:var(--accent2)}
+.msg-nick.admin{color:#4ade80}
+.msg-nick.root{color:#f87171}
+.msg-sys{font-size:12px;color:var(--text3);text-align:center;padding:2px 0}
+.msg-txt{color:var(--text);word-break:break-all}
+.chat-input{padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:6px;flex-shrink:0}
+.chat-input input{flex:1;padding:7px 10px;font-size:13px;min-width:0}
+.admin-wrap{border-top:1px solid var(--border);flex-shrink:0}
+.admin-head{padding:8px 10px;font-size:12px;color:var(--text2);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.admin-head:hover{color:var(--text)}
+.admin-btns{padding:0 10px 10px;display:flex;flex-wrap:wrap;gap:6px}
+.auth-wrap{padding:8px 10px 10px;border-top:1px solid var(--border);flex-shrink:0}
+.auth-wrap label{font-size:11px;color:var(--text3);display:block;margin-bottom:5px}
+.auth-row{display:flex;gap:5px}
+.auth-row input{flex:1;padding:6px 8px;font-size:13px;min-width:0}
+
+@media (max-width: 1100px){
+  #room{height:auto;min-height:100vh}
+  .room-body{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      'player'
+      'queue'
+      'chat';
+    overflow:visible;
+  }
+  .player-col{position:static}
+  .player-col,.queue-col,.chat-col{width:100%}
+  .queue-col{min-height:360px}
+  .chat-col{min-height:280px}
+  .cover-wrap{max-width:240px;margin:0 auto;padding-top:18px}
+  .lyrics{max-height:180px}
+  .messages{max-height:260px}
+}
+
+@media (max-width: 768px){
+  #rooms{justify-content:center;padding:4px 0 8px;gap:12px}
+  .room-card{width:220px;height:112px;flex-basis:220px;padding:12px 14px}
+  .topbar{padding:12px 14px;gap:8px}
+  .topbar-name{width:100%}
+  .topbar-desc{flex-basis:100%;white-space:normal;overflow:visible;text-overflow:clip}
+  .online,.my-nick{font-size:12px}
+  .announce{padding:8px 14px;line-height:1.5}
+  .room-body{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      'player'
+      'queue'
+      'chat';
+    overflow:visible;
+    padding:10px;
+  }
+  .player-col,.queue-col,.chat-col{width:100%;min-width:0;max-width:none}
+  .player-col{position:static}
+  .cover-wrap{max-width:220px;padding:14px 14px 0}
+  .music-meta,.progress,.player-ctrl{padding-left:14px;padding-right:14px}
+  .lyrics{padding:8px 14px;max-height:160px}
+  .search-row{flex-wrap:wrap;padding:10px 12px}
+  .search-row input{flex:1 1 100%}
+  .search-row select,.search-row .btn{flex:1 1 calc(50% - 4px)}
+  .col-head{padding:10px 12px}
+  .song-row{align-items:flex-start;padding:10px 12px}
+  .song-acts{margin-left:auto}
+  .users-wrap,.messages,.chat-input,.admin-head,.admin-btns,.auth-wrap{padding-left:12px;padding-right:12px}
+  .messages{max-height:220px}
+  .chat-input{flex-wrap:wrap}
+  .chat-input input{flex:1 1 100%}
+  .chat-input .btn{width:100%}
+  .auth-row{flex-wrap:wrap}
+  .auth-row input{flex:1 1 100%}
+  .auth-row .btn{flex:1 1 calc(50% - 3px)}
+  .modal{padding:22px 16px;width:min(400px,92vw)}
+  .modal-foot{flex-direction:column-reverse}
+  .modal-foot .btn{width:100%}
+}
+
+@media (max-width: 640px){
+  #rooms{justify-content:center}
+  .room-card{width:220px}
+}
+
+@media (max-width: 480px){
+  .logo{font-size:24px}
+  .topbar{padding:10px 12px}
+  .player-ctrl{gap:6px}
+  .mode-tag,.skip-btn{width:100%;text-align:center;justify-content:center}
+  .song-row{gap:8px}
+  .song-cov{width:34px;height:34px}
+  .song-meta2{white-space:normal}
+}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<!-- 大厅 -->
+<div id="lobby">
+  <div class="lobby-head">
+    <div>
+      <div class="logo">UNI<em>ON</em></div>
+      <div class="lobby-sub">搜索房间、创建房间、直接进入。房间页会同步到地址栏，便于刷新和返回。</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="UI.nickModal()">设置昵称</button>
+  </div>
+  <div class="lobby-bar">
+    <input id="room-search" placeholder="搜索房间名称..." oninput="UI.filterRooms()">
+    <div class="toggle" id="hide-empty" onclick="UI.toggleHide()">隐藏空房间</div>
+    <button class="btn btn-primary" onclick="UI.createModal()">+ 创建房间</button>
+  </div>
+  <div id="rooms"></div>
+</div>
+
+<!-- 房间 -->
+<div id="room" class="hidden">
+  <div class="topbar">
+    <button class="btn btn-ghost btn-sm topbar-back" onclick="WS.leave()">返回大厅</button>
+    <div class="topbar-meta">
+      <div class="topbar-name" id="r-name">公共房间</div>
+      <div class="topbar-desc" id="r-desc"></div>
+    </div>
+    <span class="room-route" id="room-route">/</span>
+    <div class="online"><span class="dot" id="r-dot"></span><span id="r-online">0</span> 人</div>
+    <span class="my-nick" id="my-nick" onclick="UI.nickModal()">匿名</span>
+  </div>
+  <div class="announce hidden" id="announce"></div>
+  <div class="room-body">
+    <!-- 播放器 -->
+    <div class="player-col">
+      <div class="cover-wrap">
+        <div class="cover-ph" id="cover-ph">&#9835;</div>
+        <img class="cover-img hidden" id="cover-img" alt="">
+      </div>
+      <div class="music-meta">
+        <div class="music-title" id="m-title">暂无播放</div>
+        <div class="music-artist" id="m-artist"></div>
+        <div class="music-picker" id="m-picker"></div>
+      </div>
+      <div class="progress">
+        <div class="prog-bar" id="prog-bar" onclick="Player.seek(event)">
+          <div class="prog-fill" id="prog-fill"></div>
+        </div>
+        <div class="prog-time"><span id="t-cur">0:00</span><span id="t-total">0:00</span></div>
+      </div>
+      <div class="lyrics" id="lyrics"></div>
+      <div class="player-ctrl">
+        <span class="mode-tag" id="mode-tag">顺序播放</span>
+        <button class="skip-btn" onclick="WS.send('/music/skip/vote',{})">投票切歌</button>
+      </div>
+    </div>
+    <!-- 队列 -->
+    <div class="queue-col">
+      <div class="col-head">
+        <span id="q-label">播放列表</span>
+        <span id="q-count" style="font-weight:400">0 首</span>
+      </div>
+      <div class="search-row">
+        <input id="s-input" placeholder="搜索歌曲..." onkeydown="if(event.key==='Enter')Queue.search()">
+        <select id="s-src">
+          <option value="wy">网易云</option>
+          <option value="qq">QQ音乐</option>
+          <option value="mg">咪咕</option>
+          <option value="lz">荔枝</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="Queue.search()">搜索</button>
+      </div>
+      <div class="queue-list" id="q-list"></div>
+      <div class="search-panel hidden" id="s-panel"></div>
+    </div>
+    <!-- 聊天 -->
+    <div class="chat-col">
+      <div class="col-head">在线成员</div>
+      <div class="users-wrap" id="users"></div>
+      <div class="col-head" style="border-top:1px solid var(--border)">聊天</div>
+      <div class="messages" id="msgs"></div>
+      <div class="chat-input">
+        <input id="c-input" placeholder="发送消息..." maxlength="200"
+               onkeydown="if(event.key==='Enter')Chat.send()">
+        <button class="btn btn-primary btn-sm" onclick="Chat.send()">发送</button>
+      </div>
+      <div class="admin-wrap">
+        <div class="admin-head" onclick="UI.toggleAdmin()">
+          <span>管理控制</span><span id="admin-arrow">&#9654;</span>
+        </div>
+        <div class="admin-btns hidden" id="admin-btns">
+          <button class="btn btn-ghost btn-xs" onclick="WS.send('/music/skip/vote',{})">强制切歌</button>
+          <button class="btn btn-ghost btn-xs" onclick="Admin.clear()">清空队列</button>
+          <button class="btn btn-ghost btn-xs" onclick="WS.send('/music/musiclistmodel/true',{})">顺序循环</button>
+          <button class="btn btn-ghost btn-xs" onclick="WS.send('/music/musiccirclemodel/true',{})">单曲循环</button>
+          <button class="btn btn-ghost btn-xs" onclick="WS.send('/music/randommodel/true',{})">随机播放</button>
+          <button class="btn btn-ghost btn-xs" onclick="Admin.toggleGood()">好歌模式</button>
+        </div>
+      </div>
+      <div class="auth-wrap">
+        <label>管理员认证</label>
+        <div class="auth-row">
+          <input id="auth-in" type="password" placeholder="密码"
+                 onkeydown="if(event.key==='Enter')Auth.admin()">
+          <button class="btn btn-ghost btn-xs" onclick="Auth.admin()">管理</button>
+          <button class="btn btn-ghost btn-xs" onclick="Auth.root()">Root</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 创建房间弹窗 -->
+<div class="overlay hidden" id="modal-create" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal">
+    <h2>创建房间</h2>
+    <div class="field"><label>房间名称 *</label><input id="cr-name" placeholder="输入房间名"></div>
+    <div class="field"><label>房间描述</label><input id="cr-desc" placeholder="可选"></div>
+    <div class="field">
+      <label class="check-row">
+        <input type="checkbox" id="cr-pwd-on" onchange="document.getElementById('cr-pwd-wrap').classList.toggle('hidden',!this.checked)">
+        设置访问密码
+      </label>
+    </div>
+    <div class="field hidden" id="cr-pwd-wrap">
+      <label>密码</label><input id="cr-pwd" type="password" placeholder="房间密码">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-create').classList.add('hidden')">取消</button>
+      <button class="btn btn-primary" onclick="Lobby.create()">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 输入密码弹窗 -->
+<div class="overlay hidden" id="modal-pwd" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal" style="width:320px">
+    <h2>输入房间密码</h2>
+    <div class="field">
+      <input id="enter-pwd" type="password" placeholder="请输入密码"
+             onkeydown="if(event.key==='Enter')Lobby.confirmEnter()">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-pwd').classList.add('hidden')">取消</button>
+      <button class="btn btn-primary" onclick="Lobby.confirmEnter()">进入</button>
+    </div>
+  </div>
+</div>
+
+<!-- 设置昵称弹窗 -->
+<div class="overlay hidden" id="modal-nick" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal" style="width:320px">
+    <h2>设置昵称</h2>
+    <div class="field">
+      <input id="nick-in" maxlength="20" placeholder="输入昵称"
+             onkeydown="if(event.key==='Enter')UI.saveNick()">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-nick').classList.add('hidden')">取消</button>
+      <button class="btn btn-primary" onclick="UI.saveNick()">保存</button>
+    </div>
+  </div>
+</div>
+
+<audio id="aud" preload="auto"></audio>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════
+   全局状态
+═══════════════════════════════════════════ */
+var State = {
+  sock: null, connected: false, inRoom: false,
+  myId: null, myRole: 'default', myName: '',
+  roomId: 'default', queue: [], users: [],
+  music: null, playMode: 'list', goodMode: false,
+  hideEmpty: false, houses: [], pendingId: null,
+  routeSyncing: false, pendingRouteSync: false,
+};
+
+var aud = document.getElementById('aud');
+
+var Route = {
+  roomId: function() {
+    var id = new URLSearchParams(window.location.search).get('roomId');
+    return id ? id.trim() : '';
+  },
+
+  sync: function(roomId, replace) {
+    if (State.routeSyncing) return;
+    var url = roomId && roomId !== 'default'
+      ? '/?roomId=' + encodeURIComponent(roomId)
+      : '/';
+    var state = roomId && roomId !== 'default' ? { roomId: roomId } : { roomId: null };
+    if (replace) history.replaceState(state, '', url);
+    else history.pushState(state, '', url);
+  },
+
+  restore: function() {
+    var roomId = this.roomId();
+    if (!roomId) {
+      Lobby.load();
+      return;
+    }
+    fetch('/house/get', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: roomId }),
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      if (d.code !== '20000' || !d.data) {
+        Route.sync(null, true);
+        Lobby.load();
+        return;
+      }
+      var h = d.data;
+      Lobby.enter(h.id, h.name, !!h.needPwd, true);
+    }).catch(function() {
+      Lobby.load();
+    });
+  },
+
+  handlePop: function() {
+    var roomId = this.roomId();
+    State.routeSyncing = true;
+    if (!roomId) {
+      if (State.inRoom || State.connected) {
+        WS.leave(true);
+        return;
+      }
+      Render.showLobby(true);
+      Lobby.load();
+      State.routeSyncing = false;
+      return;
+    }
+    if (State.inRoom && State.roomId === roomId) {
+      State.routeSyncing = false;
+      return;
+    }
+    if (State.connected) {
+      WS.leave(true);
+    }
+    fetch('/house/get', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: roomId }),
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      State.routeSyncing = false;
+      if (d.code !== '20000' || !d.data) {
+        Route.sync(null, true);
+        Lobby.load();
+        return;
+      }
+      var h = d.data;
+      Lobby.enter(h.id, h.name, !!h.needPwd, true);
+    }).catch(function() {
+      State.routeSyncing = false;
+      Lobby.load();
+    });
+  },
+};
+
+window.addEventListener('popstate', function() { Route.handlePop(); });
+
+function $(id) { return document.getElementById(id); }
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function fmt(sec) {
+  var s = Math.floor(sec < 0 ? 0 : sec);
+  return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+}
+
+function toast(msg, ok) {
+  var el = document.createElement('div');
+  el.className = 'toast ' + (ok === false ? 'err' : 'ok');
+  el.textContent = msg;
+  $('toasts').appendChild(el);
+  setTimeout(function() { el.remove(); }, 2800);
+}
+
+/* ═══════════════════════════════════════════
+   STOMP 帧构造与解析
+═══════════════════════════════════════════ */
+function stompConnect() {
+  return 'CONNECT\naccept-version:1.1,1.2\nheart-beat:0,0\n\n\0';
+}
+
+function stompSend(dest, body) {
+  var json = body == null ? '{}' : (typeof body === 'string' ? body : JSON.stringify(body));
+  var len = new Blob([json]).size;
+  return 'SEND\ndestination:' + dest + '\ncontent-type:application/json\ncontent-length:' + len + '\n\n' + json + '\0';
+}
+
+function parseFrame(raw) {
+  if (!raw) return null;
+  var nl = raw.indexOf('\n');
+  if (nl === -1) return { type: raw.trim(), body: null };
+  var type = raw.substring(0, nl).trim();
+  if (!type) return null;
+  var bi = raw.indexOf('\n\n');
+  if (bi === -1) return { type: type, body: null };
+  var body = raw.substring(bi + 2).replace(/\0+$/, '');
+  return { type: type, body: body || null };
+}
+
+/* ═══════════════════════════════════════════
+   WebSocket
+═══════════════════════════════════════════ */
+var WS = {
+  init: function(sock, onConnected) {
+    State.sock = sock;
+    sock.onopen = function() { sock.send(stompConnect()); };
+    sock.onmessage = function(e) {
+      var frame = parseFrame(e.data);
+      if (!frame) return;
+      if (frame.type === 'CONNECTED') {
+        State.connected = true;
+        // 连接成功后自动设置已保存的昵称
+        var saved = localStorage.getItem('union_nick');
+        if (saved) WS.send('/setting/name', { name: saved });
+        if (onConnected) onConnected();
+        return;
+      }
+      if (!frame.body) return;
+      var resp;
+      try { resp = JSON.parse(frame.body); } catch(ex) { return; }
+      var h = Handlers[frame.type];
+      if (h) h(resp);
+    };
+    sock.onclose = function(e) {
+      State.connected = false;
+      State.sock = null;
+      if (State.inRoom) {
+        Render.showLobby(State.routeSyncing);
+        if (State.routeSyncing) State.routeSyncing = false;
+        toast('已断开连接', false);
+        Lobby.load();
+      } else if (e && e.code === 4001) {
+        toast('密码错误或房间不存在', false);
+      }
+    };
+    sock.onerror = function() { toast('连接失败', false); };
+  },
+
+  enter: function(roomId, pwd) {
+    var p = 'roomId=' + encodeURIComponent(roomId || 'default');
+    if (pwd) p += '&housePwd=' + encodeURIComponent(pwd);
+    this.init(new SockJS('/server?' + p), null);
+    State.roomId = roomId || 'default';
+  },
+
+  create: function(req) {
+    this.init(new SockJS('/server'), function() { WS.send('/house/add', req); });
+    State.roomId = 'default';
+  },
+
+  send: function(dest, body) {
+    if (!State.sock || State.sock.readyState !== 1) return;
+    State.sock.send(stompSend(dest, body));
+  },
+
+  leave: function(skipRoute) {
+    if (State.sock) { State.sock.close(); State.sock = null; }
+    Render.showLobby(skipRoute);
+    Lobby.load();
+  },
+};
+
+/* ═══════════════════════════════════════════
+   消息处理器
+═══════════════════════════════════════════ */
+var Handlers = {
+  SESSION_INFO: function(r) {
+    if (r.code !== '20000' || !r.data) return;
+    var u = r.data;
+    State.myId   = u.sessionId;
+    State.myRole = u.role || 'default';
+    State.myName = u.name || '';
+    $('my-nick').textContent = u.nickName || u.name || '匿名';
+    if (!u.name && !localStorage.getItem('union_nick')) {
+      setTimeout(function() { UI.nickModal(); }, 600);
+    }
+    Render.users(State.users);
+  },
+
+  ENTER_HOUSE: function(r) {
+    if (r.code !== '20000' || !r.data) return;
+    var h = r.data;
+    State.roomId = h.id;
+    State.inRoom = true;
+    $('r-name').textContent = h.name || '公共房间';
+    $('r-desc').textContent = h.desc || '';
+    var an = $('announce');
+    if (h.announce && h.announce.content) {
+      an.textContent = h.announce.content;
+      an.classList.remove('hidden');
+    } else {
+      an.classList.add('hidden');
+    }
+    Render.showRoom(State.routeSyncing);
+    State.routeSyncing = false;
+  },
+
+  ANNOUNCEMENT: function(r) {
+    var d = r.data, an = $('announce');
+    if (d && d.content) {
+      an.textContent = d.content;
+      an.classList.remove('hidden');
+    } else {
+      an.classList.add('hidden');
+    }
+  },
+
+  HOUSE_USER: function(r) {
+    if (r.code !== '20000') return;
+    State.users = r.data || [];
+    Render.users(State.users);
+  },
+
+  ONLINE: function(r) {
+    var d = r.data;
+    var n = d == null ? 0 : (typeof d === 'object' ? (d.count || d.size || 0) : +d);
+    $('r-online').textContent = n;
+    $('r-dot').className = 'dot' + (n > 0 ? '' : ' off');
+  },
+
+  MUSIC: function(r) {
+    var m = r.data;
+    State.music = m;
+    Render.player(m);
+    if (m && m.url) {
+      Player.load(m);
+    } else {
+      aud.pause(); aud.src = '';
+      Lyrics.set('');
+    }
+  },
+
+  PICK: function(r) {
+    State.queue = r.data || [];
+    var label = State.goodMode ? '好歌模式' : '播放列表';
+    $('q-label').textContent = label;
+    $('q-count').textContent = State.queue.length + ' 首';
+    Render.queue(State.queue);
+  },
+
+  CHAT: function(r) {
+    var d = r.data;
+    if (!d) return;
+    Chat.append(d.nickName, d.content, d.sessionId);
+  },
+
+  NOTICE: function(r) {
+    if (!r || !r.message) return;
+    toast(r.message, r.code === '20000');
+  },
+
+  SEARCH: function(r) {
+    if (r.code !== '20000') { if (r.message) toast(r.message, false); return; }
+    var p = r.data;
+    var list = p == null ? []
+      : Array.isArray(p) ? p
+      : (p.rows || p.list || p.records || p.t || p.data || []);
+    Render.search(list);
+  },
+
+  SEARCH_HOUSE: function(r) {
+    if (r.code !== '20000') return;
+    State.houses = r.data || [];
+    Render.rooms(State.houses);
+  },
+
+  SETTING_NAME: function(r) {
+    if (r.code === '20000') toast('昵称已更新');
+  },
+
+  AUTH_ADMIN: function(r) {
+    if (r.code === '20000') { State.myRole = 'admin'; toast('已成为管理员'); Render.users(State.users); }
+    else toast(r.message || '密码错误', false);
+  },
+  AUTH_ROOT: function(r) {
+    if (r.code === '20000') { State.myRole = 'root'; toast('已成为 Root'); Render.users(State.users); }
+    else toast(r.message || '密码错误', false);
+  },
+
+  ADD_HOUSE:       function() {},
+  ADD_HOUSE_START: function() {},
+  ENTER_HOUSE_START: function() {},
+
+  CIRCLEMODEL: function() { State.playMode = 'circle'; Render.modeTag(); },
+  LISTMODEL:   function() { State.playMode = 'list';   Render.modeTag(); },
+  RANDOMMODEL: function() { State.playMode = 'random'; Render.modeTag(); },
+
+  GOODMODEL: function(r) {
+    State.goodMode = r.data === 'GOOD';
+    $('q-label').textContent = State.goodMode ? '好歌模式' : '播放列表';
+    Render.queue(State.queue);
+  },
+
+  VOLUMN: function(r) {
+    var v = parseFloat(r.data);
+    if (!isNaN(v)) aud.volume = Math.max(0, Math.min(1, v));
+  },
+
+  AV_PLAYBACK_STATE: function() {},
+  AV_SIGNAL:         function() {},
+  PAUSE:             function() {},
+};
+
+/* ═══════════════════════════════════════════
+   播放器
+═══════════════════════════════════════════ */
+var Player = {
+  load: function(m) {
+    Lyrics.set(m.lyric || '');
+    var offset = m.pushTime ? Math.max(0, (Date.now() - m.pushTime) / 1000) : 0;
+    aud.src = m.url;
+    var play = function() {
+      if (offset > 1 && aud.duration && offset < aud.duration - 2) {
+        aud.currentTime = offset;
+      }
+      aud.play().catch(function() {});
+    };
+    if (aud.readyState >= 1) play();
+    else aud.addEventListener('loadedmetadata', play, { once: true });
+  },
+
+  seek: function(e) {
+    if (!aud.duration) return;
+    var r = $('prog-bar').getBoundingClientRect();
+    aud.currentTime = aud.duration * Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  },
+};
+
+aud.addEventListener('timeupdate', function() {
+  var t = aud.currentTime, d = aud.duration || 0;
+  $('t-cur').textContent = fmt(t);
+  $('prog-fill').style.width = d > 0 ? (t / d * 100) + '%' : '0%';
+  Lyrics.sync(t);
+});
+aud.addEventListener('loadedmetadata', function() {
+  $('t-total').textContent = fmt(aud.duration || 0);
+});
+
+/* ═══════════════════════════════════════════
+   歌词解析与同步
+═══════════════════════════════════════════ */
+var Lyrics = {
+  lines: [],
+  lastIdx: -1,
+
+  set: function(lrc) {
+    this.lines = [];
+    this.lastIdx = -1;
+    var box = $('lyrics');
+    box.innerHTML = '';
+    if (!lrc) return;
+    var re = /\[(\d+):(\d+)[.:](\d+)\](.*)/;
+    var self = this;
+    lrc.split('\n').forEach(function(line) {
+      var m = line.match(re);
+      if (m) {
+        self.lines.push({
+          t: parseInt(m[1]) * 60 + parseFloat(m[2] + '.' + m[3]),
+          text: m[4].trim(),
+        });
+      }
+    });
+    this.lines.sort(function(a, b) { return a.t - b.t; });
+    box.innerHTML = this.lines.map(function(l, i) {
+      return '<div class="lrc-line" id="lrc' + i + '">' + (esc(l.text) || '&nbsp;') + '</div>';
+    }).join('');
+  },
+
+  sync: function(t) {
+    if (!this.lines.length) return;
+    var idx = -1;
+    for (var i = 0; i < this.lines.length; i++) {
+      if (this.lines[i].t > t) break;
+      idx = i;
+    }
+    if (idx < 0) idx = 0;
+    if (idx === this.lastIdx) return;
+    this.lastIdx = idx;
+    var els = document.querySelectorAll('.lrc-line');
+    for (var j = 0; j < els.length; j++) els[j].classList.remove('cur');
+    var el = document.getElementById('lrc' + idx);
+    if (el) { el.classList.add('cur'); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  },
+};
+
+/* ═══════════════════════════════════════════
+   渲染
+═══════════════════════════════════════════ */
+var Render = {
+  showLobby: function(skipRoute) {
+    $('room').classList.add('hidden');
+    $('lobby').classList.remove('hidden');
+    State.inRoom = false;
+    State.myId   = null;
+    State.myRole = 'default';
+    State.users  = [];
+    State.queue  = [];
+    State.music  = null;
+    State.roomId = 'default';
+    aud.pause(); aud.src = '';
+    $('msgs').innerHTML   = '';
+    $('q-list').innerHTML = '';
+    $('s-panel').classList.add('hidden');
+    document.title = 'UNION';
+    if (!skipRoute) Route.sync(null, false);
+  },
+
+  showRoom: function(skipRoute) {
+    $('lobby').classList.add('hidden');
+    $('room').classList.remove('hidden');
+    document.title = $('r-name').textContent + ' - UNION';
+    if (!skipRoute) Route.sync(State.roomId, false);
+  },
+
+  rooms: function(houses) {
+    var q = $('room-search').value.toLowerCase();
+    var list = houses.filter(function(h) {
+      if (q && (h.name || '').toLowerCase().indexOf(q) === -1) return false;
+      if (State.hideEmpty && !h.population) return false;
+      return true;
+    });
+    var grid = $('rooms');
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty-state">暂无房间</div>';
+      return;
+    }
+    grid.innerHTML = list.map(function(h) {
+      return '<div class="room-card" onclick="Lobby.enter(\'' + esc(h.id) + '\',\'' + esc(h.name) + '\',' + (!!h.needPwd) + ')">' +
+        '<div class="rc-head">' +
+          '<div class="rc-name-wrap">' +
+            '<div class="rc-name">' + (h.needPwd ? '&#128274; ' : '') + esc(h.name) +
+              (h.id === 'default' ? ' <span class="tag">公共</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="rc-desc">' + esc(h.desc || '') + '</div>' +
+        '<div class="rc-foot">' +
+          '<span class="rc-pop"><span class="dot' + (h.population ? '' : ' off') + '"></span>' + (h.population || 0) + ' 人在线</span>' +
+          '<span class="rc-enter">进入</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  },
+
+  player: function(m) {
+    if (!m) {
+      $('m-title').textContent  = '暂无播放';
+      $('m-artist').textContent = '';
+      $('m-picker').textContent = '';
+      $('cover-img').classList.add('hidden');
+      $('cover-ph').classList.remove('hidden');
+      $('prog-fill').style.width = '0%';
+      $('t-cur').textContent  = '0:00';
+      $('t-total').textContent = '0:00';
+      return;
+    }
+    $('m-title').textContent  = m.name   || '未知歌曲';
+    $('m-artist').textContent = m.artist || '';
+    $('m-picker').textContent = m.nickName ? '点歌: ' + m.nickName : '';
+    $('t-total').textContent  = fmt((m.duration || 0) / 1000);
+    var img = $('cover-img');
+    if (m.pictureUrl) {
+      img.src = m.pictureUrl;
+      img.classList.remove('hidden');
+      $('cover-ph').classList.add('hidden');
+    } else {
+      img.classList.add('hidden');
+      $('cover-ph').classList.remove('hidden');
+    }
+  },
+
+  queue: function(list) {
+    var el = $('q-list');
+    if (!list || !list.length) {
+      el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">队列为空</div>';
+      return;
+    }
+    el.innerHTML = list.map(function(s, i) {
+      var mine = s.sessionId === State.myId;
+      var admin = State.myRole === 'admin' || State.myRole === 'root';
+      return '<div class="song-row">' +
+        '<span class="song-n">' + (i + 1) + '</span>' +
+        '<div class="song-cov">' +
+          (s.pictureUrl ? '<img src="' + esc(s.pictureUrl) + '" loading="lazy" alt="">' : '&#9835;') +
+        '</div>' +
+        '<div class="song-info">' +
+          '<div class="song-name">' + esc(s.name || '未知') + '</div>' +
+          '<div class="song-meta2">' + esc(s.artist || '') + (s.nickName ? ' - ' + esc(s.nickName) : '') + '</div>' +
+        '</div>' +
+        '<div class="song-acts">' +
+          (State.goodMode ? '<button class="ico-btn" onclick="WS.send(\'/music/good/' + esc(s.id) + '\',null)" title="点赞">&#128077;</button>' : '') +
+          (admin ? '<button class="ico-btn" onclick="Queue.top(\'' + esc(s.id) + '\',\'' + esc(s.name||'') + '\')" title="置顶">&#11014;</button>' : '') +
+          ((admin || mine) ? '<button class="ico-btn del" onclick="WS.send(\'/music/delete\',{id:\'' + esc(s.id) + '\'})" title="删除">&#10005;</button>' : '') +
+        '</div></div>';
+    }).join('');
+  },
+
+  search: function(list) {
+    var panel = $('s-panel');
+    if (!list || !list.length) {
+      panel.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">无结果</div>';
+      panel.classList.remove('hidden');
+      return;
+    }
+    panel.innerHTML = list.map(function(s) {
+      return '<div class="sr-row" onclick="Queue.pick(\'' + esc(s.id) + '\',\'' + esc(s.name||'') + '\')">' +
+        '<span class="sr-add">+</span>' +
+        (s.cover || s.pictureUrl ? '<img style="width:32px;height:32px;border-radius:6px;object-fit:cover" src="' + esc(s.cover||s.pictureUrl) + '" loading="lazy" alt="">' : '') +
+        '<div class="song-info">' +
+          '<div class="song-name">' + esc(s.name || '') + '</div>' +
+          '<div class="song-meta2">' + esc(s.artists || s.artist || '') + '</div>' +
+        '</div></div>';
+    }).join('');
+    panel.classList.remove('hidden');
+  },
+
+  users: function(list) {
+    $('users').innerHTML = list.map(function(u) {
+      var cls = 'u-chip';
+      if (u.role === 'root')  cls += ' root';
+      else if (u.role === 'admin') cls += ' admin';
+      if (u.sessionId === State.myId) cls += ' me';
+      var label = (u.nickName || u.name || '匿名') + (u.sessionId === State.myId ? '(我)' : '');
+      return '<span class="' + cls + '">' + esc(label) + '</span>';
+    }).join('');
+  },
+
+  modeTag: function() {
+    var map = { list: '顺序播放', circle: '单曲循环', random: '随机播放' };
+    $('mode-tag').textContent = map[State.playMode] || '顺序播放';
+  },
+};
+
+/* ═══════════════════════════════════════════
+   大厅
+═══════════════════════════════════════════ */
+var Lobby = {
+  load: function() {
+    fetch('/house/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      if (d.code === '20000') {
+        State.houses = d.data || [];
+        Render.rooms(State.houses);
+      }
+    }).catch(function() {});
+  },
+
+  enter: function(id, name, needPwd, skipRoute) {
+    State.pendingRouteSync = !!skipRoute;
+    if (needPwd) {
+      State.pendingId = id;
+      $('enter-pwd').value = '';
+      $('modal-pwd').classList.remove('hidden');
+      setTimeout(function() { $('enter-pwd').focus(); }, 50);
+    } else {
+      if (skipRoute) State.routeSyncing = true;
+      WS.enter(id, '');
+    }
+  },
+
+  confirmEnter: function() {
+    var pwd = $('enter-pwd').value;
+    $('modal-pwd').classList.add('hidden');
+    if (State.pendingRouteSync) State.routeSyncing = true;
+    State.pendingRouteSync = false;
+    WS.enter(State.pendingId, pwd);
+  },
+
+  create: function() {
+    var name = $('cr-name').value.trim();
+    if (!name) { toast('请输入房间名称', false); return; }
+    var needPwd  = $('cr-pwd-on').checked;
+    var password = $('cr-pwd').value;
+    if (needPwd && !password) { toast('请输入密码', false); return; }
+    $('modal-create').classList.add('hidden');
+    WS.create({ name: name, desc: $('cr-desc').value.trim(), needPwd: needPwd, password: needPwd ? password : '' });
+  },
+};
+
+/* ═══════════════════════════════════════════
+   队列操作
+═══════════════════════════════════════════ */
+var Queue = {
+  search: function() {
+    var q = $('s-input').value.trim();
+    if (!q) return;
+    WS.send('/music/search', { name: q, source: $('s-src').value });
+  },
+
+  pick: function(id, name) {
+    WS.send('/music/pick', { id: id, name: name, source: $('s-src').value });
+    $('s-panel').classList.add('hidden');
+    $('s-input').value = '';
+    toast('已添加到队列');
+  },
+
+  top: function(id, name) {
+    WS.send('/music/top', { id: id, name: name });
+  },
+};
+
+// 点击搜索面板外部关闭
+document.addEventListener('click', function(e) {
+  var panel = $('s-panel');
+  if (!panel.classList.contains('hidden') &&
+      !panel.contains(e.target) &&
+      e.target !== $('s-input')) {
+    panel.classList.add('hidden');
+  }
+});
+
+/* ═══════════════════════════════════════════
+   聊天
+═══════════════════════════════════════════ */
+var Chat = {
+  send: function() {
+    var content = $('c-input').value.trim();
+    if (!content) return;
+    WS.send('/chat', { content: content, sendTime: Date.now() });
+    $('c-input').value = '';
+  },
+
+  append: function(nick, text, sessionId) {
+    var msgs = $('msgs');
+    var user = null;
+    for (var i = 0; i < State.users.length; i++) {
+      if (State.users[i].sessionId === sessionId) { user = State.users[i]; break; }
+    }
+    var role = user ? user.role : 'default';
+    var div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = '<span class="msg-nick ' + role + '">' + esc(nick || '匿名') + '</span>: <span class="msg-txt">' + esc(text) + '</span>';
+    msgs.appendChild(div);
+    // 保留最多200条消息
+    while (msgs.children.length > 200) msgs.removeChild(msgs.firstChild);
+    msgs.scrollTop = msgs.scrollHeight;
+  },
+};
+
+/* ═══════════════════════════════════════════
+   管理与认证
+═══════════════════════════════════════════ */
+var Admin = {
+  clear: function() {
+    if (confirm('确定清空播放队列?')) WS.send('/music/clear', {});
+  },
+  toggleGood: function() {
+    WS.send('/music/goodmodel/' + (!State.goodMode), {});
+  },
+};
+
+var Auth = {
+  admin: function() {
+    var pwd = $('auth-in').value;
+    if (!pwd) return;
+    WS.send('/auth/admin', { password: pwd });
+    $('auth-in').value = '';
+  },
+  root: function() {
+    var pwd = $('auth-in').value;
+    if (!pwd) return;
+    WS.send('/auth/root', { password: pwd });
+    $('auth-in').value = '';
+  },
+};
+
+/* ═══════════════════════════════════════════
+   UI 交互
+═══════════════════════════════════════════ */
+var UI = {
+  filterRooms: function() { Render.rooms(State.houses); },
+
+  toggleHide: function() {
+    State.hideEmpty = !State.hideEmpty;
+    $('hide-empty').classList.toggle('on', State.hideEmpty);
+    Render.rooms(State.houses);
+  },
+
+  createModal: function() {
+    $('cr-name').value = '';
+    $('cr-desc').value = '';
+    $('cr-pwd-on').checked = false;
+    $('cr-pwd').value = '';
+    $('cr-pwd-wrap').classList.add('hidden');
+    $('modal-create').classList.remove('hidden');
+    setTimeout(function() { $('cr-name').focus(); }, 50);
+  },
+
+  nickModal: function() {
+    $('nick-in').value = State.myName || localStorage.getItem('union_nick') || '';
+    $('modal-nick').classList.remove('hidden');
+    setTimeout(function() { $('nick-in').focus(); }, 50);
+  },
+
+  saveNick: function() {
+    var name = $('nick-in').value.trim();
+    if (!name) { toast('请输入昵称', false); return; }
+    $('modal-nick').classList.add('hidden');
+    State.myName = name;
+    localStorage.setItem('union_nick', name);
+    $('my-nick').textContent = name;
+    if (State.connected) WS.send('/setting/name', { name: name });
+  },
+
+  toggleAdmin: function() {
+    var btns = $('admin-btns');
+    var wasHidden = btns.classList.contains('hidden');
+    btns.classList.toggle('hidden');
+    $('admin-arrow').innerHTML = wasHidden ? '&#9660;' : '&#9654;';
+  },
+};
+
+/* ═══════════════════════════════════════════
+   启动
+═══════════════════════════════════════════ */
+var savedNick = localStorage.getItem('union_nick');
+if (savedNick) State.myName = savedNick;
+
+Route.restore();
+setInterval(function() { if (!State.inRoom) Lobby.load(); }, 15000);
+</script>
+</body>
+</html>

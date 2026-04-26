@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author H
@@ -17,49 +17,56 @@ import java.util.List;
 public class MusicPickRepositoryImpl implements MusicPickRepository {
 
     @Autowired
-    private JusicProperties jusicProperties;
-    @Autowired
     private JusicProperties.RedisKeys redisKeys;
     @Autowired
     private RedisTemplate redisTemplate;
 
     @Override
     public void destroy() {
-        redisTemplate.opsForList()
-                .trim(redisKeys.getPickList(), 1, 0);
+        Set keys = redisTemplate.keys(redisKeys.getPickList() + "_*");
+        if (keys != null) {
+            for (Object key : keys) {
+                redisTemplate.opsForList().trim(key, 1, 0);
+            }
+        }
     }
 
     @Override
-    public Long leftPush(Music pick) {
-        return redisTemplate.opsForList()
-                .leftPush(redisKeys.getPickList(), pick);
+    public void destroy(String roomId) {
+        redisTemplate.opsForList().trim(redisKeys.getPickList(roomId), 1, 0);
     }
 
     @Override
-    public Long leftPushAll(Object... value) {
+    public Long leftPush(String roomId, Music pick) {
         return redisTemplate.opsForList()
-                .leftPushAll(redisKeys.getPickList(), value);
+                .leftPush(redisKeys.getPickList(roomId), pick);
     }
 
     @Override
-    public Long rightPushAll(Object... value) {
+    public Long leftPushAll(String roomId, Object... value) {
         return redisTemplate.opsForList()
-                .rightPushAll(redisKeys.getPickList(), value);
+                .leftPushAll(redisKeys.getPickList(roomId), value);
     }
 
     @Override
-    public Long size() {
+    public Long rightPushAll(String roomId, Object... value) {
         return redisTemplate.opsForList()
-                .size(redisKeys.getPickList());
+                .rightPushAll(redisKeys.getPickList(roomId), value);
+    }
+
+    @Override
+    public Long size(String roomId) {
+        return redisTemplate.opsForList()
+                .size(redisKeys.getPickList(roomId));
     }
 
     /**
      * clear the pick list.
      */
     @Override
-    public void reset() {
+    public void reset(String roomId) {
         redisTemplate.opsForList()
-                .trim(redisKeys.getPickList(), 1, 0);
+                .trim(redisKeys.getPickList(roomId), 1, 0);
     }
 
     /**
@@ -68,11 +75,11 @@ public class MusicPickRepositoryImpl implements MusicPickRepository {
      * @return LinkedList
      */
     @Override
-    public List<Music> getPickMusicList() {
-        Long size = this.size();
+    public List<Music> getPickMusicList(String roomId) {
+        Long size = this.size(roomId);
         size = size == null ? 0 : size;
         return (List<Music>) redisTemplate.opsForList()
-                .range(redisKeys.getPickList(), 0, size);
+                .range(redisKeys.getPickList(roomId), 0, size);
     }
 
 }

@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 
@@ -35,6 +34,9 @@ public class MusicController {
     private SessionService sessionService;
     @Autowired
     private ConfigService configService;
+    private static final String PLAY_MODE_SINGLE = "single";
+    private static final String PLAY_MODE_LIST = "list";
+    private static final String PLAY_MODE_RANDOM = "random";
     private static final List<String> roles = new ArrayList<String>() {{
         add("root");
         add("admin");
@@ -48,14 +50,15 @@ public class MusicController {
 //        }
         log.info("收到点歌请求: {},{}", music.getName(),music.getId());
         String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
         String nickName = sessionService.getNickName(sessionId);
         Chat chat = new Chat();
         chat.setContent("点歌 " + music.getName());
         chat.setNickName(nickName);
         chat.setSessionId(sessionId);
-        sessionService.send(MessageType.CHAT, Response.success(chat));
+        sessionService.sendRoom(roomId, MessageType.CHAT, Response.success(chat));
 
-        if(configService.getEnableSearch() != null && !configService.getEnableSearch()){
+        if(configService.getEnableSearch(roomId) != null && !configService.getEnableSearch(roomId)){
             sessionService.send(sessionId,MessageType.NOTICE, Response.failure((Object) null, "当前禁止点歌"));
             return;
         }
@@ -81,25 +84,25 @@ public class MusicController {
         boolean isNull = null == pick || null == pick.getUrl() ||(null == pick.getId() && null == pick.getUrl() && null == pick.getDuration());
         if (isNull) {
             log.info("点歌失败, 可能音乐不存在, 关键字: {}, 即将向客户端反馈点歌失败消息", music.getName());
-            sessionService.send(MessageType.NOTICE, Response.failure((Object) null, "点歌失败,暂无此音乐或须单独购买"));
+            sessionService.sendRoom(roomId, MessageType.NOTICE, Response.failure((Object) null, "点歌失败,暂无此音乐或须单独购买"));
         } else if (musicService.isBlack(pick.getId())) {
             log.info("点歌失败, 音乐: {} 已被拉黑, 关键字: {}, 即将向客户端反馈点歌失败消息", pick.getId(), music.getName());
-            sessionService.send(MessageType.NOTICE, Response.failure((Object) null, "点歌失败, 音乐已被拉黑"));
-        } else if (musicService.isPicked(pick.getId())) {
+            sessionService.sendRoom(roomId, MessageType.NOTICE, Response.failure((Object) null, "点歌失败, 音乐已被拉黑"));
+        } else if (musicService.isPicked(roomId, pick.getId())) {
             log.info("点歌失败, 音乐: {} 已在播放列表中, 关键字: {}, 即将向客户端反馈点歌失败消息", pick.getId(), music.getName());
-            sessionService.send(MessageType.NOTICE, Response.failure((Object) null, "点歌失败, 已在播放列表"));
+            sessionService.sendRoom(roomId, MessageType.NOTICE, Response.failure((Object) null, "点歌失败, 已在播放列表"));
         } else {
             log.info("点歌成功, 音乐: {}, 时长: {}, 链接: {}, 即将向客户端广播消息以及列表", pick.getName(), pick.getDuration(), pick.getUrl());
-            musicService.toPick(sessionId, pick);
-            LinkedList<Music> pickList = musicService.getPickList();
-            sessionService.send(MessageType.NOTICE, Response.success((Object) null, "点歌成功"));
+            musicService.toPick(roomId, sessionId, pick);
+            LinkedList<Music> pickList = musicService.getPickList(roomId);
+            sessionService.sendRoom(roomId, MessageType.NOTICE, Response.success((Object) null, "点歌成功"));
             log.info("点歌成功");
 //            if(configService.getGoodModel() != null && configService.getGoodModel()){
 //                sessionService.send(MessageType.PICK, Response.success(pickList, "goodlist"));
 //            }else{
-//                sessionService.send(MessageType.PICK, Response.success(pickList, "点歌列表"));
+//                sessionService.sendRoom(roomId, MessageType.PICK, Response.success(pickList, "点歌列表"));
 //            }
-            sessionService.send(MessageType.PICK, Response.success(pickList, "点歌列表"));
+            sessionService.sendRoom(roomId, MessageType.PICK, Response.success(pickList, "点歌列表"));
             log.info("向客户端发送点歌列表, 共 {} 首, 列表: {}", pickList.size(), pickList);
         }
     }
@@ -108,15 +111,16 @@ public class MusicController {
     public void good(@DestinationVariable String musicId, StompHeaderAccessor accessor) {
         // 点歌消息反馈
         String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
         accessor.getSessionAttributes().get("remoteAddress");
         String nickName = sessionService.getNickName(sessionId);
         Chat chat = new Chat();
-        if(configService.getGoodModel() == null || !configService.getGoodModel()) {
+        if(configService.getGoodModel(roomId) == null || !configService.getGoodModel(roomId)) {
             sessionService.send(sessionId,MessageType.NOTICE, Response.success((Object) null, "当前不是点赞模式"));
             return;
         }
         String ip = (String)(accessor.getSessionAttributes().get("remoteAddress"));//IPUtils.getRemoteAddress(request);
-        Object[] musics = musicService.getMusicById(musicId);
+        Object[] musics = musicService.getMusicById(roomId, musicId);
         if(musics == null){
             sessionService.send(sessionId,MessageType.NOTICE, Response.success((Object) null, "点歌列表未发现此歌"));
             return;
@@ -138,10 +142,10 @@ public class MusicController {
         chat.setContent(music.getName()+"点赞数"+ips.size());
         chat.setNickName(nickName);
         chat.setSessionId(sessionId);
-        sessionService.send(MessageType.CHAT, Response.success(chat));
+        sessionService.sendRoom(roomId, MessageType.CHAT, Response.success(chat));
         // 点歌结果反馈
-        LinkedList pickList = musicService.getSortedPickList((List<Music>)musics[1]);
-        sessionService.send(MessageType.PICK, Response.success(pickList, "点歌列表"));
+        LinkedList pickList = musicService.getSortedPickList(roomId, (List<Music>)musics[1]);
+        sessionService.sendRoom(roomId, MessageType.PICK, Response.success(pickList, "点歌列表"));
     }
 
     @MessageMapping("/music/volumn/{volumn}")
@@ -154,7 +158,7 @@ public class MusicController {
             sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "你没有权限"));
         }else{
             sessionService.send(sessionId, MessageType.NOTICE, Response.success((Object) null, "调整音量成功"));
-            sessionService.send(MessageType.VOLUMN, Response.success(volumn, "调整后的音量"));
+            sessionService.sendRoom(sessionService.getRoomId(sessionId), MessageType.VOLUMN, Response.success(volumn, "调整后的音量"));
 
         }
     }
@@ -163,39 +167,40 @@ public class MusicController {
     public void skip(StompHeaderAccessor accessor) {
         // 投票消息反馈
         String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
         String nickName = sessionService.getNickName(sessionId);
         Chat chat = new Chat();
         chat.setSessionId(sessionId);
         chat.setContent("投票切歌");
         chat.setNickName(nickName);
-        sessionService.send(MessageType.CHAT, Response.success(chat));
-        if(configService.getEnableSwitch() != null && !configService.getEnableSwitch()){
+        sessionService.sendRoom(roomId, MessageType.CHAT, Response.success(chat));
+        if(configService.getEnableSwitch(roomId) != null && !configService.getEnableSwitch(roomId)){
             sessionService.send(sessionId,MessageType.NOTICE, Response.failure((Object) null, "禁止切歌"));
             return;
         }
         Long voteCount = 0L;
         Long vote = 0L;
-        Long size = sessionService.size();
+        Long size = sessionService.size(roomId);
         if (roles.contains(sessionService.getRole(sessionId))) {
             // 管理员
-            configService.setPushSwitch(true);
+            configService.setPushSwitch(roomId, true);
             log.info("推送开关开启, 原因: 投票通过 - 管理员参与投票");
-            sessionService.send(MessageType.NOTICE, Response.success((Object) null, "切歌成功"));
+            sessionService.sendRoom(roomId, MessageType.NOTICE, Response.success((Object) null, "切歌成功"));
         } else {
             // 投票
-            vote = musicService.vote(sessionId);
-            voteCount = musicService.getVoteCount();
+            vote = musicService.vote(roomId, sessionId);
+            voteCount = musicService.getVoteCount(roomId);
             if (vote == 0) {
                 sessionService.send(sessionId,MessageType.NOTICE, Response.failure((Object) null, "你已经投过票了,当前状态："+voteCount + "/" + size));
                 log.info("你已经投过票了");
             }else{
-                sessionService.send(MessageType.NOTICE, Response.success((Object) null, voteCount + "/" + size + " 投票成功"));
+                sessionService.sendRoom(roomId, MessageType.NOTICE, Response.success((Object) null, voteCount + "/" + size + " 投票成功"));
             }
         }
         log.info("投票成功");
-        Float voteRate = configService.getVoteRate();
-        if (voteCount == 1 && vote != 0 && voteCount < size * voteRate) {
-            sessionService.send(MessageType.NOTICE, Response.success((Object) null, "有人希望切歌, 如果支持请发送“投票切歌”"));
+        Float voteRate = configService.getVoteRate(roomId);
+        if (voteCount == 1 && vote != 0 && voteRate != null && voteCount < size * voteRate) {
+            sessionService.sendRoom(roomId, MessageType.NOTICE, Response.success((Object) null, "有人希望切歌, 如果支持请发送“投票切歌”"));
             log.info("有人希望切歌, 如果支持请发送“投票切歌”");
         }
     }
@@ -206,31 +211,36 @@ public class MusicController {
      * @return 调整后的点歌列表
      */
     @MessageMapping("/music/order")
-    @SendTo("/topic/music/order")
-    public Response modifyPickOrder(LinkedList<Music> musicList, StompHeaderAccessor accessor) {
+    public void modifyPickOrder(LinkedList<Music> musicList, StompHeaderAccessor accessor) {
         String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
         String role = sessionService.getRole(sessionId);
         if (!roles.contains(role)) {
-            return Response.failure((Object) null, "你没有权限");
+            sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "你没有权限"));
+            return;
         }
 
-        musicService.modifyPickOrder(musicList);
-        return Response.success(musicList, "调整成功");
+        musicService.modifyPickOrder(roomId, musicList);
+        sessionService.send(sessionId, MessageType.NOTICE, Response.success((Object) null, "调整成功"));
+        sessionService.sendRoom(roomId, MessageType.PICK, Response.success(musicService.getPickList(roomId), "调整后的播放列表"));
     }
 
     @MessageMapping("/music/clear")
     public void clearPlayerList(StompHeaderAccessor accessor){
         String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
         String role = sessionService.getRole(sessionId);
         if (!roles.contains(role)) {
             sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "你没有权限"));
         }else{
-            musicService.clearPlayList();
+            musicService.clearPlayList(roomId);
             LinkedList<Music> pickList = new LinkedList<>();
-            Music music = musicService.getPlaying();
-            pickList.add(music);
+            Music music = musicService.getPlaying(roomId);
+            if (music != null) {
+                pickList.add(music);
+            }
             sessionService.send(sessionId, MessageType.NOTICE, Response.success((Object) null, "清空列表成功"));
-            sessionService.send(MessageType.PICK, Response.success(pickList, "清空后的播放列表"));
+            sessionService.sendRoom(roomId, MessageType.PICK, Response.success(pickList, "清空后的播放列表"));
 
         }
     }
@@ -243,6 +253,7 @@ public class MusicController {
     @MessageMapping("/music/delete")
     public void deletePickMusic(Music music, StompHeaderAccessor accessor) {
         String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
         String role = sessionService.getRole(sessionId);
         music.setName(music.getId());
         if (!roles.contains(role)) {
@@ -250,11 +261,11 @@ public class MusicController {
             music.setSessionId(sessionId);
 //            sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "你没有权限"));
         }
-            if(musicService.deletePickMusic(music)){
-                LinkedList<Music> pickList = musicService.getPickList();
+            if(musicService.deletePickMusic(roomId, music)){
+                LinkedList<Music> pickList = musicService.getPickList(roomId);
                 log.info("session: {} 删除音乐: {} 已成功, 即将广播删除后的播放列表", sessionId, music.getName());
                 sessionService.send(sessionId, MessageType.NOTICE, Response.success((Object) null, "删除成功"));
-                sessionService.send(MessageType.PICK, Response.success(pickList, "删除后的播放列表"));
+                sessionService.sendRoom(roomId, MessageType.PICK, Response.success(pickList, "删除后的播放列表"));
 
             }else{
                 sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "本人暂未点播此歌或请输入完整歌名"));
@@ -270,16 +281,17 @@ public class MusicController {
     @MessageMapping("/music/top")
     public void topPickMusic(Music music, StompHeaderAccessor accessor) {
         String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
         String role = sessionService.getRole(sessionId);
         if (!roles.contains(role)) {
             log.info("session: {} 尝试置顶音乐但没有权限, 已被阻止", sessionId);
             sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "你没有权限"));
         } else {
-            musicService.topPickMusic(music);
-            LinkedList<Music> pickList = musicService.getPickList();
+            musicService.topPickMusic(roomId, music);
+            LinkedList<Music> pickList = musicService.getPickList(roomId);
             log.info("session: {} 置顶音乐: {} 已成功, 即将广播置顶操作后的播放列表", sessionId, music.getName());
             sessionService.send(sessionId, MessageType.NOTICE, Response.success((Object) null, "置顶成功"));
-            sessionService.send(MessageType.PICK, Response.success(pickList, "置顶后的播放列表"));
+            sessionService.sendRoom(roomId, MessageType.PICK, Response.success(pickList, "置顶后的播放列表"));
         }
     }
 
@@ -309,18 +321,19 @@ public class MusicController {
     @MessageMapping("/music/banswitch/{ban}")
     public void banswitch(@DestinationVariable boolean ban,StompHeaderAccessor accessor) {
         String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
         String role = sessionService.getRole(sessionId);
         if (!roles.contains(role)) {
             log.info("session: {} 尝试禁止切歌, 没有权限, 已被阻止", sessionId);
             sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "你没有权限"));
         } else {
-            configService.setEnableSwitch(!ban);
+            configService.setEnableSwitch(roomId, !ban);
             if(ban){
                 log.info("session: {} 禁止切歌功能已成功", sessionId);
-                sessionService.send(MessageType.NOTICE, Response.success((Object) null, "禁止切歌功能成功"));
+                sessionService.sendRoom(roomId, MessageType.NOTICE, Response.success((Object) null, "禁止切歌功能成功"));
             }else{
                 log.info("session: {} 启用切歌功能已成功", sessionId);
-                sessionService.send(MessageType.NOTICE, Response.success((Object) null, "启用切歌功能成功"));
+                sessionService.sendRoom(roomId, MessageType.NOTICE, Response.success((Object) null, "启用切歌功能成功"));
             }
            }
     }
@@ -332,22 +345,23 @@ public class MusicController {
     @MessageMapping("/music/goodmodel/{good}")
     public void goodModel(@DestinationVariable boolean good,StompHeaderAccessor accessor) {
         String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
         String role = sessionService.getRole(sessionId);
         if (!roles.contains(role)) {
             log.info("session: {} 尝试点赞模式, 没有权限, 已被阻止", sessionId);
             sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "你没有权限"));
         } else {
-            configService.setGoodModel(good);
+            configService.setGoodModel(roomId, good);
             if(good){
                 log.info("session: {} 进入点赞模式已成功", sessionId);
-                sessionService.send(MessageType.NOTICE, Response.success((Object) null, "进入点赞模式"));
-                LinkedList<Music> pickList = musicService.getPickList();
-                sessionService.send(MessageType.GOODMODEL, Response.success("GOOD", "goodlist"));
+                sessionService.sendRoom(roomId, MessageType.NOTICE, Response.success((Object) null, "进入点赞模式"));
+                LinkedList<Music> pickList = musicService.getPickList(roomId);
+                sessionService.sendRoom(roomId, MessageType.GOODMODEL, Response.success("GOOD", "goodlist"));
 
             }else{
                 log.info("session: {} 退出点赞模式已成功", sessionId);
-                sessionService.send(MessageType.NOTICE, Response.success((Object) null, "退出点赞模式"));
-                sessionService.send(MessageType.GOODMODEL, Response.success("EXITGOOD", "goodlist"));
+                sessionService.sendRoom(roomId, MessageType.NOTICE, Response.success((Object) null, "退出点赞模式"));
+                sessionService.sendRoom(roomId, MessageType.GOODMODEL, Response.success("EXITGOOD", "goodlist"));
             }
         }
     }
@@ -355,20 +369,39 @@ public class MusicController {
     @MessageMapping("/music/banchoose/{ban}")
     public void banchoose(@DestinationVariable boolean ban,StompHeaderAccessor accessor) {
         String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
         String role = sessionService.getRole(sessionId);
         if (!roles.contains(role)) {
             log.info("session: {} 尝试禁止点歌, 没有权限, 已被阻止", sessionId);
             sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "你没有权限"));
         } else {
-            configService.setEnableSearch(!ban);
+            configService.setEnableSearch(roomId, !ban);
             if(ban){
                 log.info("session: {} 禁止点歌功能已成功", sessionId);
-                sessionService.send(MessageType.NOTICE, Response.success((Object) null, "禁止点歌功能成功"));
+                sessionService.sendRoom(roomId, MessageType.NOTICE, Response.success((Object) null, "禁止点歌功能成功"));
             }else{
                 log.info("session: {} 启用点歌功能已成功", sessionId);
-                sessionService.send(MessageType.NOTICE, Response.success((Object) null, "启用点歌功能成功"));
+                sessionService.sendRoom(roomId, MessageType.NOTICE, Response.success((Object) null, "启用点歌功能成功"));
             }
         }
+    }
+
+    @MessageMapping("/music/musiccirclemodel/{enable}")
+    public void circleModel(@DestinationVariable boolean enable, StompHeaderAccessor accessor) {
+        this.updatePlayMode(accessor, enable ? PLAY_MODE_SINGLE : PLAY_MODE_LIST, MessageType.CIRCLEMODEL,
+                enable ? "已启用单曲循环" : "已退出单曲循环");
+    }
+
+    @MessageMapping("/music/musiclistmodel/{enable}")
+    public void listModel(@DestinationVariable boolean enable, StompHeaderAccessor accessor) {
+        this.updatePlayMode(accessor, PLAY_MODE_LIST, MessageType.LISTMODEL,
+                enable ? "已启用列表循环" : "已退出列表循环");
+    }
+
+    @MessageMapping("/music/randommodel/{enable}")
+    public void randomModel(@DestinationVariable boolean enable, StompHeaderAccessor accessor) {
+        this.updatePlayMode(accessor, enable ? PLAY_MODE_RANDOM : PLAY_MODE_LIST, MessageType.RANDOMMODEL,
+                enable ? "已启用随机模式" : "已退出随机模式");
     }
 
     @MessageMapping("/music/unblack")
@@ -417,6 +450,19 @@ public class MusicController {
         Page<List<Music>> page = musicService.search(music, hulkPage);
         log.info("session: {} 尝试搜索音乐, 关键字: {}, 即将向该用户推送结果", accessor.getHeader("simpSessionId"), music.getName());
         sessionService.send(sessionId, MessageType.SEARCH, Response.success(page, "搜索结果"));
+    }
+
+    private void updatePlayMode(StompHeaderAccessor accessor, String playMode, MessageType messageType, String successMessage) {
+        String sessionId = accessor.getHeader("simpSessionId").toString();
+        String roomId = sessionService.getRoomId(sessionId);
+        String role = sessionService.getRole(sessionId);
+        if (!roles.contains(role)) {
+            sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "你没有权限"));
+            return;
+        }
+        configService.setPlayMode(roomId, playMode);
+        sessionService.send(sessionId, MessageType.NOTICE, Response.success((Object) null, successMessage));
+        sessionService.sendRoom(roomId, messageType, Response.success(playMode, successMessage));
     }
 
 }

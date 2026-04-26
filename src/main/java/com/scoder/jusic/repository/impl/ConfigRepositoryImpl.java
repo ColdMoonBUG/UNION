@@ -25,10 +25,19 @@ public class ConfigRepositoryImpl implements ConfigRepository {
 
     @Override
     public Long destroy() {
-        Set keys = redisTemplate.opsForHash()
-                .keys(redisKeys.getConfigHash());
-        return keys.size() > 0 ? redisTemplate.opsForHash()
-                .delete(redisKeys.getConfigHash(), keys.toArray()) : 0;
+        Long deleted = this.destroyHash(redisKeys.getConfigHash()) + this.destroyHash(redisKeys.getRoomConfigHash());
+        Set roomKeys = redisTemplate.keys(redisKeys.getRoomConfigHash() + "_*");
+        if (roomKeys != null) {
+            for (Object roomKey : roomKeys) {
+                deleted += this.destroyHash(roomKey);
+            }
+        }
+        return deleted;
+    }
+
+    @Override
+    public Long destroy(String roomId) {
+        return this.destroyHash(redisKeys.getRoomConfigHash(roomId));
     }
 
     @Override
@@ -54,6 +63,24 @@ public class ConfigRepositoryImpl implements ConfigRepository {
     public void putAll(Map<String, Object> map) {
         redisTemplate.opsForHash()
                 .putAll(redisKeys.getConfigHash(), map);
+    }
+
+    @Override
+    public Object getRoom(String roomId, Object hashKey) {
+        return redisTemplate.opsForHash()
+                .get(redisKeys.getRoomConfigHash(roomId), hashKey);
+    }
+
+    @Override
+    public void putRoom(String roomId, Object hashKey, Object value) {
+        redisTemplate.opsForHash()
+                .put(redisKeys.getRoomConfigHash(roomId), hashKey, value);
+    }
+
+    @Override
+    public void putAllRoom(String roomId, Map<String, Object> map) {
+        redisTemplate.opsForHash()
+                .putAll(redisKeys.getRoomConfigHash(roomId), map);
     }
 
     @Override
@@ -87,75 +114,135 @@ public class ConfigRepositoryImpl implements ConfigRepository {
     }
 
     @Override
-    public Long getLastMusicDuration() {
-        return (Long) this.get(redisKeys.getLastMusicDuration());
+    public Long getLastMusicDuration(String roomId) {
+        return this.getLongRoom(roomId, redisKeys.getLastMusicDuration());
     }
 
     @Override
-    public void setLastMusicDuration(Long duration) {
-        this.put(redisKeys.getLastMusicDuration(), duration);
+    public void setLastMusicDuration(String roomId, Long duration) {
+        this.putRoom(roomId, redisKeys.getLastMusicDuration(), duration);
     }
 
     @Override
-    public Long getLastMusicPushTime() {
-        return (Long) this.get(redisKeys.getLastMusicPushTime());
+    public Long getLastMusicPushTime(String roomId) {
+        return this.getLongRoom(roomId, redisKeys.getLastMusicPushTime());
     }
 
     @Override
-    public void setLastMusicPushTime(Long pushTime) {
-        this.put(redisKeys.getLastMusicPushTime(), pushTime);
+    public void setLastMusicPushTime(String roomId, Long pushTime) {
+        this.putRoom(roomId, redisKeys.getLastMusicPushTime(), pushTime);
     }
 
     @Override
-    public void setLastMusicPushTimeAndDuration(Long pushTime, Long duration) {
+    public void setLastMusicPushTimeAndDuration(String roomId, Long pushTime, Long duration) {
         Map<String, Object> map = new HashMap<>(2);
         map.put(redisKeys.getLastMusicPushTime(), pushTime);
         map.put(redisKeys.getLastMusicDuration(), duration);
-        this.putAll(map);
+        this.putAllRoom(roomId, map);
     }
 
     @Override
-    public Boolean getPushSwitch() {
-        return (Boolean) this.get(redisKeys.getSwitchMusicPush());
+    public Boolean getPushSwitch(String roomId) {
+        return this.getBooleanRoom(roomId, redisKeys.getSwitchMusicPush());
     }
 
     @Override
-    public void setPushSwitch(boolean pushSwitch) {
-        this.put(redisKeys.getSwitchMusicPush(), pushSwitch);
+    public void setPushSwitch(String roomId, boolean pushSwitch) {
+        this.putRoom(roomId, redisKeys.getSwitchMusicPush(), pushSwitch);
     }
 
     @Override
-    public Float getVoteRate() {
-        return (float) this.get(redisKeys.getVoteSkipRate());
+    public Float getVoteRate(String roomId) {
+        Object value = this.getRoom(roomId, redisKeys.getVoteSkipRate());
+        if (value == null) {
+            value = this.get(redisKeys.getVoteSkipRate());
+        }
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Float) {
+            return (Float) value;
+        }
+        if (value instanceof Double) {
+            return ((Double) value).floatValue();
+        }
+        if (value instanceof Number) {
+            return ((Number) value).floatValue();
+        }
+        return Float.valueOf(value.toString());
     }
 
     @Override
-    public Boolean getEnableSwitch() {
-        return (Boolean) this.get(redisKeys.getSwitchMusicEnable());
+    public Boolean getEnableSwitch(String roomId) {
+        return this.getBooleanRoom(roomId, redisKeys.getSwitchMusicEnable());
     }
 
     @Override
-    public void setEnableSwitch(boolean enableSwitch) {
-        this.put(redisKeys.getSwitchMusicEnable(), enableSwitch);
+    public void setEnableSwitch(String roomId, boolean enableSwitch) {
+        this.putRoom(roomId, redisKeys.getSwitchMusicEnable(), enableSwitch);
     }
 
     @Override
-    public Boolean getEnableSearch() {
-        return (Boolean) this.get(redisKeys.getSearchMusicEnable());
+    public Boolean getEnableSearch(String roomId) {
+        return this.getBooleanRoom(roomId, redisKeys.getSearchMusicEnable());
     }
 
     @Override
-    public void setEnableSearch(boolean enableSearch) {
-        this.put(redisKeys.getSearchMusicEnable(), enableSearch);
+    public void setEnableSearch(String roomId, boolean enableSearch) {
+        this.putRoom(roomId, redisKeys.getSearchMusicEnable(), enableSearch);
     }
 
     @Override
-    public Boolean getGoodModel() {
-        return (Boolean) this.get(redisKeys.getGoodModel());
+    public Boolean getGoodModel(String roomId) {
+        return this.getBooleanRoom(roomId, redisKeys.getGoodModel());
     }
 
     @Override
-    public void setGoodModel(boolean goodModel) {
-        this.put(redisKeys.getGoodModel(), goodModel);
+    public void setGoodModel(String roomId, boolean goodModel) {
+        this.putRoom(roomId, redisKeys.getGoodModel(), goodModel);
+    }
+
+    @Override
+    public String getPlayMode(String roomId) {
+        Object value = this.getRoom(roomId, redisKeys.getPlayMode());
+        return value == null ? null : value.toString();
+    }
+
+    @Override
+    public void setPlayMode(String roomId, String playMode) {
+        this.putRoom(roomId, redisKeys.getPlayMode(), playMode);
+    }
+
+    private Long destroyHash(Object key) {
+        Set keys = redisTemplate.opsForHash().keys(key);
+        if (keys == null || keys.isEmpty()) {
+            return 0L;
+        }
+        return redisTemplate.opsForHash().delete(key, keys.toArray());
+    }
+
+    private Long getLongRoom(String roomId, String key) {
+        Object value = this.getRoom(roomId, key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Long) {
+            return (Long) value;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        return Long.valueOf(value.toString());
+    }
+
+    private Boolean getBooleanRoom(String roomId, String key) {
+        Object value = this.getRoom(roomId, key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        return Boolean.valueOf(value.toString());
     }
 }

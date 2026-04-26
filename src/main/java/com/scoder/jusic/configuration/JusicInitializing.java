@@ -30,12 +30,14 @@ public class JusicInitializing implements InitializingBean {
     private final MusicPickRepository musicPickRepository;
     private final MusicVoteRepository musicVoteRepository;
     private final SessionBlackRepository sessionBlackRepository;
+    private final HouseRepository houseRepository;
+    private final AvPlaybackStateRepository avPlaybackStateRepository;
 
     @Autowired
     private MusicTopJob musicTopJob;
 
 
-    public JusicInitializing(ConfigRepository configRepository, SessionRepository sessionRepository, MusicDefaultRepository musicDefaultRepository, MusicPlayingRepository musicPlayingRepository, MusicPickRepository musicPickRepository, MusicVoteRepository musicVoteRepository, JusicProperties jusicProperties, ResourceLoader resourceLoader, SessionBlackRepository sessionBlackRepository) {
+    public JusicInitializing(ConfigRepository configRepository, SessionRepository sessionRepository, MusicDefaultRepository musicDefaultRepository, MusicPlayingRepository musicPlayingRepository, MusicPickRepository musicPickRepository, MusicVoteRepository musicVoteRepository, JusicProperties jusicProperties, ResourceLoader resourceLoader, SessionBlackRepository sessionBlackRepository, HouseRepository houseRepository, AvPlaybackStateRepository avPlaybackStateRepository) {
         this.configRepository = configRepository;
         this.sessionRepository = sessionRepository;
         this.musicDefaultRepository = musicDefaultRepository;
@@ -45,6 +47,8 @@ public class JusicInitializing implements InitializingBean {
         this.jusicProperties = jusicProperties;
         this.resourceLoader = resourceLoader;
         this.sessionBlackRepository = sessionBlackRepository;
+        this.houseRepository = houseRepository;
+        this.avPlaybackStateRepository = avPlaybackStateRepository;
     }
 
     @Override
@@ -107,6 +111,8 @@ public class JusicInitializing implements InitializingBean {
         musicPlayingRepository.destroy();
         musicPickRepository.destroy();
         musicVoteRepository.destroy();
+        houseRepository.destroy();
+        avPlaybackStateRepository.destroy();
         log.info("清理工作完成");
     }
 }

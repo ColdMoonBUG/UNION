@@ -9,52 +9,19 @@ import java.util.List;
  */
 public interface MusicPickRepository {
 
-    /**
-     * destroy
-     */
     void destroy();
 
-    /**
-     * left push
-     *
-     * @param pick music
-     * @return 0 or 1
-     */
-    Long leftPush(Music pick);
+    void destroy(String roomId);
 
-    /**
-     * left push all.
-     *
-     * @param value value
-     * @return -
-     */
-    Long leftPushAll(Object... value);
+    Long leftPush(String roomId, Music pick);
 
-    /**
-     * right push all
-     *
-     * @param value value
-     * @return -
-     */
-    Long rightPushAll(Object... value);
+    Long leftPushAll(String roomId, Object... value);
 
-    /**
-     * get size
-     *
-     * @return -
-     */
-    Long size();
+    Long rightPushAll(String roomId, Object... value);
 
-    /**
-     * clear the pick list.
-     */
-    void reset();
+    Long size(String roomId);
 
-    /**
-     * get all pick music.
-     *
-     * @return LinkedList
-     */
-    List<Music> getPickMusicList();
+    void reset(String roomId);
 
+    List<Music> getPickMusicList(String roomId);
 }

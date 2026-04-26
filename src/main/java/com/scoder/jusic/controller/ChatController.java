@@ -5,8 +5,10 @@ import com.scoder.jusic.common.page.HulkPage;
 import com.scoder.jusic.common.page.Page;
 import com.scoder.jusic.model.Chat;
 import com.scoder.jusic.model.MessageType;
+import com.scoder.jusic.model.Notice;
 import com.scoder.jusic.model.User;
 import com.scoder.jusic.service.ChatService;
+import com.scoder.jusic.service.HouseService;
 import com.scoder.jusic.service.SessionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,8 @@ public class ChatController {
     private SessionService sessionService;
     @Autowired
     private ChatService chatService;
+    @Autowired
+    private HouseService houseService;
     private static final List<String> roles = new ArrayList<String>() {{
         add("root");
         add("admin");
@@ -47,7 +51,7 @@ public class ChatController {
         } else {
             chat.setSessionId(sessionId);
             chat.setNickName(user.getNickName());
-            sessionService.send(MessageType.CHAT, Response.success(chat));
+            sessionService.sendRoom(user.getRoomId(), MessageType.CHAT, Response.success(chat));
             sessionService.setLastMessageTime(user, currentTime);
         }
     }
@@ -111,6 +115,27 @@ public class ChatController {
             Page<List> page = chatService.pictureSearch(chat.getContent(), hulkPage);
             log.info("session: {} 尝试搜索图片, 关键字: {}, 即将向该用户推送结果", sessionId, chat.getContent());
             sessionService.send(sessionId, MessageType.SEARCH_PICTURE, Response.success(page, "搜索结果"));
+        }
+    }
+
+    @MessageMapping("/chat/announce")
+    public void announce(Notice notice, StompHeaderAccessor accessor) {
+        String sessionId = accessor.getHeader("simpSessionId").toString();
+        String role = sessionService.getRole(sessionId);
+        if (!roles.contains(role)) {
+            sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "你没有权限"));
+            return;
+        }
+        String roomId = sessionService.getRoomId(sessionId);
+        try {
+            Notice currentNotice = notice == null ? new Notice() : notice;
+            currentNotice.setSessionId(sessionId);
+            currentNotice.setNickName(sessionService.getNickName(sessionId));
+            currentNotice.setPushTime(System.currentTimeMillis());
+            Notice savedNotice = houseService.updateAnnouncement(roomId, currentNotice);
+            sessionService.sendRoom(roomId, MessageType.ANNOUNCEMENT, Response.success(savedNotice, "房间公告"));
+        } catch (IllegalArgumentException e) {
+            sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, e.getMessage()));
         }
     }
 

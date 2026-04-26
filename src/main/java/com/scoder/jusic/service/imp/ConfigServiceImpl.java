@@ -17,42 +17,52 @@ public class ConfigServiceImpl implements ConfigService {
     private ConfigRepository configRepository;
 
     @Override
-    public void setPushSwitch(boolean pushSwitch) {
-        configRepository.setPushSwitch(pushSwitch);
+    public void setPushSwitch(String roomId, boolean pushSwitch) {
+        configRepository.setPushSwitch(roomId, pushSwitch);
     }
 
     @Override
-    public void setEnableSwitch(boolean enableSwitch) {
-        configRepository.setEnableSwitch(enableSwitch);
+    public void setEnableSwitch(String roomId, boolean enableSwitch) {
+        configRepository.setEnableSwitch(roomId, enableSwitch);
     }
 
     @Override
-    public void setEnableSearch(boolean enableSearch) {
-        configRepository.setEnableSearch(enableSearch);
+    public void setEnableSearch(String roomId, boolean enableSearch) {
+        configRepository.setEnableSearch(roomId, enableSearch);
     }
 
     @Override
-    public Boolean getEnableSearch() {
-        return configRepository.getEnableSearch();
+    public Boolean getEnableSearch(String roomId) {
+        return configRepository.getEnableSearch(roomId);
     }
 
     @Override
-    public Float getVoteRate() {
-        return configRepository.getVoteRate();
+    public Float getVoteRate(String roomId) {
+        return configRepository.getVoteRate(roomId);
     }
 
     @Override
-    public Boolean getEnableSwitch() {
-        return configRepository.getEnableSwitch();
+    public Boolean getEnableSwitch(String roomId) {
+        return configRepository.getEnableSwitch(roomId);
     }
 
     @Override
-    public Boolean getGoodModel() {
-        return configRepository.getGoodModel();
+    public Boolean getGoodModel(String roomId) {
+        return configRepository.getGoodModel(roomId);
     }
 
     @Override
-    public void setGoodModel(boolean goodModel) {
-        configRepository.setGoodModel(goodModel);
+    public void setGoodModel(String roomId, boolean goodModel) {
+        configRepository.setGoodModel(roomId, goodModel);
+    }
+
+    @Override
+    public String getPlayMode(String roomId) {
+        return configRepository.getPlayMode(roomId);
+    }
+
+    @Override
+    public void setPlayMode(String roomId, String playMode) {
+        configRepository.setPlayMode(roomId, playMode);
     }
 }

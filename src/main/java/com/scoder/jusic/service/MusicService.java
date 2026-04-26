@@ -12,63 +12,28 @@ import java.util.List;
  */
 public interface MusicService {
 
-    /**
-     * 接收点歌请求，推送点歌信息
-     *
-     * @param sessionId session id
-     * @param request   music info
-     * @return music info
-     */
     Music toPick(String sessionId, Music request);
 
-    /**
-     * 切歌
-     *
-     * @return 将要播放的音乐
-     */
-    Music musicSwitch();
+    Music toPick(String roomId, String sessionId, Music request);
 
-    /**
-     * get pick list
-     *
-     * @return linked list
-     */
-    LinkedList<Music> getPickList();
+    Music musicSwitch(String roomId);
 
-    List<Music> getPickListNoPlaying();
+    LinkedList<Music> getPickList(String roomId);
 
-    LinkedList<Music> getSortedPickList(List<Music> musicList);
+    List<Music> getPickListNoPlaying(String roomId);
 
-    Music getPlaying();
-    /**
-     * 修改点歌列表顺序
-     *
-     * @param musicList -
-     * @return -
-     */
-    Long modifyPickOrder(LinkedList<Music> musicList);
+    LinkedList<Music> getSortedPickList(String roomId, List<Music> musicList);
 
-    /**
-     * 投票
-     *
-     * @param sessionId session id
-     * @return 0：投票失败，已经参与过。1：投票成功
-     */
+    Music getPlaying(String roomId);
+
+    Long modifyPickOrder(String roomId, LinkedList<Music> musicList);
+
     Long vote(String sessionId);
 
-    /**
-     * 从集合中获取参与投票的人数
-     *
-     * @return 参与投票的人数
-     */
-    Long getVoteCount();
+    Long vote(String roomId, String sessionId);
 
-    /**
-     * get music
-     *
-     * @param keyword keyword
-     * @return music
-     */
+    Long getVoteCount(String roomId);
+
     Music getMusic(String keyword);
 
     Music getQQMusic(String keyword);
@@ -81,75 +46,29 @@ public interface MusicService {
 
     Music getMGMusicById(String id);
 
-    /**
-     * get music url
-     *
-     * @param musicId music id
-     * @return url
-     */
     String getMusicUrl(String musicId);
 
     String getQQMusicUrl(String musicId);
 
-    String getMGMusicUrl(String musicId,String musicName);
+    String getMGMusicUrl(String musicId, String musicName);
 
-    /**
-     * 删除音乐
-     *
-     * @param music music
-     */
-    boolean deletePickMusic(Music music);
-    /**
-     * top pick music
-     *
-     * @param music -
-     */
-    void topPickMusic(Music music);
+    boolean deletePickMusic(String roomId, Music music);
 
-    /**
-     * black
-     *
-     * @param id music id
-     * @return -
-     */
+    void topPickMusic(String roomId, Music music);
+
     Long black(String id);
 
-    /**
-     * un black
-     *
-     * @param id music id
-     * @return -
-     */
     Long unblack(String id);
 
-    /**
-     * is black?
-     *
-     * @param id music id
-     * @return -
-     */
     boolean isBlack(String id);
 
-    /**
-     * is picked ?
-     *
-     * @param id music id
-     * @return
-     */
-    boolean isPicked(String id);
+    boolean isPicked(String roomId, String id);
 
-    Object[] getMusicById(String id);
+    Object[] getMusicById(String roomId, String id);
 
-        /**
-         * search music
-         * @param music music
-         * @param hulkPage page
-         * @return list
-         */
     Page<List<Music>> search(Music music, HulkPage hulkPage);
 
-    boolean clearPlayList();
+    boolean clearPlayList(String roomId);
 
     String showBlackMusic();
-
 }

@@ -38,7 +38,7 @@ public class MailController {
             chat.setSessionId(user.getSessionId());
             chat.setNickName(user.getNickName());
             chat.setContent("@管理员 " + chat.getContent());
-            sessionService.send(MessageType.CHAT, Response.success(chat, "@管理员"));
+            sessionService.sendRoom(user.getRoomId(), MessageType.CHAT, Response.success(chat, "@管理员"));
             sessionService.setLastMessageTime(user, System.currentTimeMillis());
 
             StringBuilder content = new StringBuilder()
