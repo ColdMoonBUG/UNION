@@ -55,6 +55,9 @@ jusic:
   music-serve-domain: 'http://localhost:8888'
   music-serve-domain-qq: 'http://localhost:3300'
   music-serve-domain-mg: 'http://localhost:3400'#'http://localhost:3400'#
+  netease-cookie: '${NETEASE_COOKIE:}'
+  qq-cookie: '${QQ_COOKIE:}'
+  bilibili-cookie: '${BILIBILI_COOKIE:}'
   mail-send-from: 'xx@139.com'
   mail-send-to: 'xx@qq.com'
   serverJUrl: 'https://sc.ftqq.com/xx.send'

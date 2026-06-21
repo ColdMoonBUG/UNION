@@ -4,11 +4,13 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
+import com.scoder.jusic.configuration.JusicProperties;
 import com.scoder.jusic.model.AvMediaResolveResult;
 import com.scoder.jusic.service.AvMediaResolveService;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -28,6 +30,9 @@ import java.util.regex.Pattern;
 @Service
 @Slf4j
 public class AvMediaResolveServiceImpl implements AvMediaResolveService {
+
+    @Autowired
+    private JusicProperties jusicProperties;
 
     private static final Pattern BV_PATTERN = Pattern.compile("(BV[0-9A-Za-z]{10})");
     private static final Pattern AV_PATTERN = Pattern.compile("(?i)av(\\d+)");
@@ -96,9 +101,9 @@ public class AvMediaResolveServiceImpl implements AvMediaResolveService {
         }
         AvMediaResolveResult result = new AvMediaResolveResult();
         result.setOriginUrl(normalizedUrl);
-        result.setMediaUrl(mediaUrl);
+        result.setMediaUrl("/av/media/proxy?url=" + this.encodeQuery(mediaUrl));
         result.setTitle(title);
-        result.setContentType(this.guessContentType(mediaUrl));
+        result.setContentType("video/mp4");
         result.setMediaId(StringUtils.hasText(bvid) ? bvid : aid);
         result.setPosterUrl(this.safeTrim(this.extractPoster(playInfo)));
         return result;
@@ -117,6 +122,7 @@ public class AvMediaResolveServiceImpl implements AvMediaResolveService {
             HttpResponse<String> response = Unirest.get(url.toString())
                     .header("User-Agent", this.defaultUa())
                     .header("Referer", "https://www.bilibili.com")
+                    .header("Cookie", getBilibiliCookie())
                     .asString();
             JSONObject responseJson = JSONObject.parseObject(response.getBody());
             if (responseJson == null || !Integer.valueOf(0).equals(responseJson.getInteger("code"))) {
@@ -136,11 +142,12 @@ public class AvMediaResolveServiceImpl implements AvMediaResolveService {
             url.append("aid=").append(this.encodeQuery(aid));
         }
         url.append("&cid=").append(cid)
-                .append("&qn=80&fnval=0&fnver=0&fourk=0&platform=html5");
+                .append("&qn=116&fnval=0&fnver=0&fourk=1&platform=html5");
         try {
             HttpResponse<String> response = Unirest.get(url.toString())
                     .header("User-Agent", this.defaultUa())
                     .header("Referer", "https://www.bilibili.com")
+                    .header("Cookie", getBilibiliCookie())
                     .asString();
             JSONObject responseJson = JSONObject.parseObject(response.getBody());
             if (responseJson == null || !Integer.valueOf(0).equals(responseJson.getInteger("code"))) {
@@ -240,6 +247,7 @@ public class AvMediaResolveServiceImpl implements AvMediaResolveService {
                     .userAgent(this.defaultUa())
                     .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
                     .header("Referer", "https://www.bilibili.com")
+                    .header("Cookie", getBilibiliCookie())
                     .timeout(10000)
                     .get();
             return document.outerHtml();
@@ -436,5 +444,10 @@ public class AvMediaResolveServiceImpl implements AvMediaResolveService {
 
     private String safeTrim(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String getBilibiliCookie() {
+        String cookie = jusicProperties.getBilibiliCookie();
+        return cookie == null || cookie.trim().isEmpty() ? "" : cookie;
     }
 }

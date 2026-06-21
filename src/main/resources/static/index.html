@@ -1108,7 +1108,10 @@ var Handlers = {
     }
     Cinema.applyState(r.data);
   },
-  AV_SIGNAL: function() {},
+  AV_SIGNAL: function(r) {
+    if (r.code !== '20000' || !r.data) return;
+    Cinema.p2p.onSignal(r.data);
+  },
   PAUSE: function() {},
 };
 
@@ -1271,7 +1274,9 @@ var Cinema = {
       toast('请输入视频地址', false);
       return;
     }
-    var title = $('av-url-title').value.trim() || this.titleFromUrl(url);
+    var userTitle = $('av-url-title').value.trim();
+    var isBilibili = /bilibili\.com|b23\.tv|bili2233\.cn/i.test(url);
+    var title = userTitle || (isBilibili ? '' : this.titleFromUrl(url));
     this.resolveSource(url, title).then(function(result) {
       Cinema.pushState({
         mediaType: 'video',
@@ -1297,54 +1302,8 @@ var Cinema = {
     var fileInput = $('av-file');
     var file = fileInput.files && fileInput.files[0];
     if (!file) return;
-    var form = new FormData();
-    form.append('file', file);
-    var xhr = new XMLHttpRequest();
-    var status = $('av-upload-status');
-    status.textContent = '正在上传: ' + file.name;
-    xhr.open('POST', '/av/media/upload', true);
-    xhr.upload.onprogress = function(e) {
-      if (!e.lengthComputable) return;
-      var percent = Math.round(e.loaded / e.total * 100);
-      status.textContent = '正在上传: ' + file.name + ' ' + percent + '%';
-    };
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status < 200 || xhr.status >= 300) {
-        status.textContent = '上传失败';
-        toast('上传失败', false);
-        return;
-      }
-      var d;
-      try { d = JSON.parse(xhr.responseText || '{}'); } catch (e) { d = {}; }
-      if (d.code !== '20000' || !d.data) {
-        status.textContent = '上传失败';
-        toast(d.message || '上传失败', false);
-        return;
-      }
-      toast('视频上传成功');
-      status.textContent = '上传完成: ' + (d.data.name || file.name || '上传视频');
-      Cinema.pushState({
-        mediaType: 'video',
-        sourceType: 'upload',
-        originUrl: d.data.url,
-        mediaUrl: d.data.url,
-        mediaId: d.data.url,
-        title: d.data.name || file.name || '上传视频',
-        positionMs: 0,
-        playbackRate: parseFloat($('av-rate').value) || 1,
-        volume: avVideo.volume,
-        playing: false,
-        updatedAt: Date.now(),
-        resolvedAt: Date.now(),
-      });
-      fileInput.value = '';
-    };
-    xhr.onerror = function() {
-      status.textContent = '上传失败';
-      toast('上传失败', false);
-    };
-    xhr.send(form);
+    Cinema.p2p.shareLocal(file);
+    fileInput.value = '';
   },
 
   resolveSource: function(url, title) {
@@ -1486,6 +1445,14 @@ var Cinema = {
     };
 
     if (this.currentSourceUrl !== state.mediaUrl) {
+      if (state.sourceType === 'p2p' || state.mediaUrl === '__p2p__') {
+        State.avSyncing = false;
+        $('av-loading').classList.add('hidden');
+        $('av-title').textContent = state.title || 'P2P 视频';
+        $('av-sub').textContent = 'P2P 分享 · ' + (state.updatedBy || '');
+        this.currentSourceUrl = '__p2p__';
+        return;
+      }
       $('av-loading').classList.remove('hidden');
       try {
         this.attachSource(state.mediaUrl);
@@ -1640,6 +1607,197 @@ var Cinema = {
     var plain = url.split('?')[0];
     var pieces = plain.split('/');
     return decodeURIComponent(pieces[pieces.length - 1] || '在线视频');
+  },
+};
+
+var RTC_CONFIG = { iceServers: [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' }
+]};
+
+Cinema.p2p = {
+  localVideo: null,
+  localStream: null,
+  peers: {},
+  isSource: false,
+  sourceSessionId: null,
+  fileName: '',
+
+  shareLocal: function(file) {
+    var self = this;
+    self.stop();
+    self.isSource = true;
+    self.fileName = file.name;
+    $('av-upload-status').textContent = 'P2P 分享中: ' + file.name;
+
+    var blobUrl = URL.createObjectURL(file);
+    var localVid = document.createElement('video');
+    localVid.muted = true;
+    localVid.playsInline = true;
+    localVid.src = blobUrl;
+    self.localVideo = localVid;
+
+    localVid.onloadedmetadata = function() {
+      localVid.play().then(function() {
+        var stream = localVid.captureStream ? localVid.captureStream() : localVid.mozCaptureStream();
+        self.localStream = stream;
+
+        avVideo.srcObject = stream;
+        avVideo.play().catch(function() {});
+        $('av-video').classList.remove('hidden');
+        $('av-empty').classList.add('hidden');
+        $('av-title').textContent = file.name;
+        $('av-sub').textContent = 'P2P 本地分享';
+        $('av-status').textContent = '分享中';
+        Cinema.currentSourceUrl = '__p2p__';
+
+        WS.send('/av/signal', { signalType: 'p2p-source-ready', payload: { title: file.name, sessionId: State.myId } });
+        Cinema.pushState({
+          mediaType: 'video',
+          sourceType: 'p2p',
+          originUrl: '__p2p__',
+          mediaUrl: '__p2p__',
+          title: file.name,
+          positionMs: 0,
+          playbackRate: 1,
+          volume: avVideo.volume,
+          playing: true,
+          updatedAt: Date.now(),
+        });
+      }).catch(function(err) {
+        toast('本地视频加载失败: ' + err.message, false);
+        self.stop();
+      });
+    };
+    localVid.onerror = function() {
+      toast('无法加载本地视频文件', false);
+      self.stop();
+    };
+  },
+
+  onSignal: function(signal) {
+    if (!signal || !signal.signalType) return;
+    var fromId = signal.sessionId;
+    switch (signal.signalType) {
+      case 'p2p-source-ready':
+        if (fromId === State.myId) return;
+        this.sourceSessionId = signal.payload.sessionId || fromId;
+        $('av-upload-status').textContent = 'P2P: 正在连接到分享者...';
+        this.connectToPeer(this.sourceSessionId);
+        break;
+      case 'offer':
+        if (!this.isSource) return;
+        this.handleOffer(fromId, signal.payload);
+        break;
+      case 'answer':
+        this.handleAnswer(fromId, signal.payload);
+        break;
+      case 'ice-candidate':
+        this.handleIce(fromId, signal.payload);
+        break;
+      case 'p2p-stopped':
+        if (fromId === this.sourceSessionId || (signal.payload && signal.payload.sessionId === this.sourceSessionId)) {
+          $('av-upload-status').textContent = '分享者已停止';
+          $('av-status').textContent = '已结束';
+          this.stop();
+        }
+        break;
+    }
+  },
+
+  connectToPeer: function(peerId) {
+    var self = this;
+    var pc = new RTCPeerConnection(RTC_CONFIG);
+    self.peers[peerId] = pc;
+
+    pc.onicecandidate = function(e) {
+      if (e.candidate) {
+        WS.send('/av/signal', { targetSessionId: peerId, signalType: 'ice-candidate', payload: e.candidate.toJSON() });
+      }
+    };
+    pc.ontrack = function(e) {
+      if (e.streams && e.streams[0]) {
+        avVideo.srcObject = e.streams[0];
+        avVideo.play().catch(function() {});
+        $('av-video').classList.remove('hidden');
+        $('av-empty').classList.add('hidden');
+        $('av-upload-status').textContent = 'P2P 接收中';
+        $('av-status').textContent = '播放中';
+      }
+    };
+    pc.addTransceiver('video', { direction: 'recvonly' });
+    pc.addTransceiver('audio', { direction: 'recvonly' });
+
+    pc.createOffer().then(function(offer) {
+      return pc.setLocalDescription(offer);
+    }).then(function() {
+      WS.send('/av/signal', { targetSessionId: peerId, signalType: 'offer', payload: pc.localDescription.toJSON() });
+    }).catch(function(err) {
+      console.warn('P2P offer failed:', err);
+    });
+  },
+
+  handleOffer: function(peerId, sdp) {
+    var self = this;
+    if (!self.localStream) return;
+    var pc = new RTCPeerConnection(RTC_CONFIG);
+    self.peers[peerId] = pc;
+
+    pc.onicecandidate = function(e) {
+      if (e.candidate) {
+        WS.send('/av/signal', { targetSessionId: peerId, signalType: 'ice-candidate', payload: e.candidate.toJSON() });
+      }
+    };
+
+    self.localStream.getTracks().forEach(function(track) {
+      pc.addTrack(track, self.localStream);
+    });
+
+    pc.setRemoteDescription(new RTCSessionDescription(sdp)).then(function() {
+      return pc.createAnswer();
+    }).then(function(answer) {
+      return pc.setLocalDescription(answer);
+    }).then(function() {
+      WS.send('/av/signal', { targetSessionId: peerId, signalType: 'answer', payload: pc.localDescription.toJSON() });
+    }).catch(function(err) {
+      console.warn('P2P answer failed:', err);
+    });
+  },
+
+  handleAnswer: function(peerId, sdp) {
+    var pc = this.peers[peerId];
+    if (!pc) return;
+    pc.setRemoteDescription(new RTCSessionDescription(sdp)).catch(function(err) {
+      console.warn('P2P setRemoteDescription failed:', err);
+    });
+  },
+
+  handleIce: function(peerId, candidate) {
+    var pc = this.peers[peerId];
+    if (!pc) return;
+    pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(function() {});
+  },
+
+  stop: function() {
+    var self = this;
+    Object.keys(self.peers).forEach(function(id) {
+      try { self.peers[id].close(); } catch (e) {}
+    });
+    self.peers = {};
+    if (self.localVideo) {
+      self.localVideo.pause();
+      self.localVideo.src = '';
+      self.localVideo = null;
+    }
+    if (self.localStream) {
+      self.localStream.getTracks().forEach(function(t) { t.stop(); });
+      self.localStream = null;
+    }
+    if (self.isSource) {
+      WS.send('/av/signal', { signalType: 'p2p-stopped', payload: { sessionId: State.myId } });
+    }
+    self.isSource = false;
+    self.sourceSessionId = null;
   },
 };
 

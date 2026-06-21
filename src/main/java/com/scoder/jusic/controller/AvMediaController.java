@@ -23,6 +23,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.web.bind.annotation.GetMapping;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 /**
  * @author H
  */
@@ -74,6 +82,56 @@ public class AvMediaController {
             return Response.success(result, "解析成功");
         } catch (IllegalArgumentException e) {
             return Response.failure((AvMediaResolveResult) null, e.getMessage());
+        }
+    }
+
+    @GetMapping("/av/media/proxy")
+    public void proxy(@RequestParam("url") String targetUrl, HttpServletRequest req, HttpServletResponse resp) {
+        if (targetUrl == null || targetUrl.trim().isEmpty()) {
+            resp.setStatus(400);
+            return;
+        }
+        try {
+            URL url = new URL(targetUrl);
+            String host = url.getHost();
+            if (!host.contains("bilivideo") && !host.contains("bilibili") && !host.contains("akamaized")) {
+                resp.setStatus(403);
+                return;
+            }
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
+            conn.setRequestProperty("Referer", "https://www.bilibili.com");
+            conn.setRequestProperty("Origin", "https://www.bilibili.com");
+
+            String rangeHeader = req.getHeader("Range");
+            if (rangeHeader != null) {
+                conn.setRequestProperty("Range", rangeHeader);
+            }
+
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(30000);
+            conn.connect();
+
+            int status = conn.getResponseCode();
+            resp.setStatus(status);
+            String ct = conn.getContentType();
+            if (ct != null) resp.setContentType(ct);
+            long cl = conn.getContentLengthLong();
+            if (cl >= 0) resp.setContentLengthLong(cl);
+            String cr = conn.getHeaderField("Content-Range");
+            if (cr != null) resp.setHeader("Content-Range", cr);
+            resp.setHeader("Accept-Ranges", "bytes");
+
+            try (InputStream in = conn.getInputStream(); OutputStream out = resp.getOutputStream()) {
+                byte[] buf = new byte[65536];
+                int n;
+                while ((n = in.read(buf)) != -1) {
+                    out.write(buf, 0, n);
+                }
+            }
+        } catch (Exception e) {
+            resp.setStatus(502);
         }
     }
 

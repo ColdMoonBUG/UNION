@@ -49,6 +49,10 @@ public class MusicServiceImpl implements MusicService {
 
     @Autowired
     private ResourceLoader resourceLoader;
+    @Autowired
+    private NeteaseApiService neteaseApiService;
+    @Autowired
+    private QQMusicApiService qqMusicApiService;
     /**
      * 把音乐放进点歌列表
      */
@@ -229,16 +233,37 @@ public class MusicServiceImpl implements MusicService {
      */
     @Override
     public Music getMusic(String keyword) {
+        // 优先直接API
+        try {
+            if (keyword.matches("\\d+")) {
+                Music direct = neteaseApiService.getMusicWithUrl(keyword);
+                if (direct != null && direct.getUrl() != null) {
+                    log.info("网易云直接API获取成功: {}", direct.getName());
+                    return direct;
+                }
+            } else {
+                List<Music> results = neteaseApiService.search(keyword, 1, 1);
+                if (!results.isEmpty()) {
+                    Music first = results.get(0);
+                    Music full = neteaseApiService.getMusicWithUrl(first.getId());
+                    if (full != null && full.getUrl() != null) {
+                        log.info("网易云直接API搜索获取成功: {}", full.getName());
+                        return full;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("网易云直接API失败, fallback到代理: {}", e.getMessage());
+        }
+
+        // Fallback: 代理服务
         HttpResponse<String> response = null;
         Music music = null;
-
         Integer failCount = 0;
-
         while (failCount < jusicProperties.getRetryCount()) {
             try {
                 response = Unirest.get(jusicProperties.getMusicServeDomain() + "/netease/song/" + keyword)
                         .asString();
-
                 if (response.getStatus() != 200) {
                     failCount++;
                 } else {
@@ -254,19 +279,40 @@ public class MusicServiceImpl implements MusicService {
                 log.error("音乐获取异常, 请检查音乐服务; Exception: [{}]", e.getMessage());
             }
         }
-
         return music;
     }
 
     @Override
     public Music getQQMusic(String keyword){
-        Music pick = null;
-        if(keyword != null){
-            if(StringUtils.isQQMusicId(keyword)){
-                pick = this.getQQMusicById(keyword);
-            }else{
-                pick = this.getQQMusicByName(keyword);
+        if (keyword == null) return null;
+        // 优先直接API
+        try {
+            if (StringUtils.isQQMusicId(keyword)) {
+                Music direct = qqMusicApiService.getMusicWithUrl(keyword);
+                if (direct != null && direct.getUrl() != null) {
+                    log.info("QQ音乐直接API获取成功: {}", direct.getName());
+                    return direct;
+                }
+            } else {
+                List<Music> results = qqMusicApiService.search(keyword, 1, 1);
+                if (!results.isEmpty()) {
+                    Music first = results.get(0);
+                    Music full = qqMusicApiService.getMusicWithUrl(first.getId());
+                    if (full != null && full.getUrl() != null) {
+                        log.info("QQ音乐直接API搜索获取成功: {}", full.getName());
+                        return full;
+                    }
+                }
             }
+        } catch (Exception e) {
+            log.warn("QQ音乐直接API失败, fallback到代理: {}", e.getMessage());
+        }
+        // Fallback: 代理服务
+        Music pick = null;
+        if (StringUtils.isQQMusicId(keyword)) {
+            pick = this.getQQMusicById(keyword);
+        } else {
+            pick = this.getQQMusicByName(keyword);
         }
         return pick;
     }
@@ -822,12 +868,35 @@ public class MusicServiceImpl implements MusicService {
     @Override
     public HulkPage search(Music music, HulkPage hulkPage) {
         if(music.getSource().equals("qq")){
+            // 优先直接API
+            try {
+                List<Music> results = qqMusicApiService.search(music.getName(), hulkPage.getPageIndex(), hulkPage.getPageSize());
+                if (!results.isEmpty()) {
+                    hulkPage.setData(results);
+                    hulkPage.setTotalSize(results.size());
+                    return hulkPage;
+                }
+            } catch (Exception e) {
+                log.warn("QQ音乐直接搜索失败, fallback: {}", e.getMessage());
+            }
             return searchQQ(music,hulkPage);
         }else if(music.getSource().equals("mg")){
             return searchMG(music,hulkPage);
         }else if(music.getSource().equals("lz")){
             return searchLZ(music,hulkPage);
         }
+        // 网易云: 优先直接API
+        try {
+            List<Music> results = neteaseApiService.search(music.getName(), hulkPage.getPageIndex(), hulkPage.getPageSize());
+            if (!results.isEmpty()) {
+                hulkPage.setData(results);
+                hulkPage.setTotalSize(results.size());
+                return hulkPage;
+            }
+        } catch (Exception e) {
+            log.warn("网易云直接搜索失败, fallback: {}", e.getMessage());
+        }
+        // Fallback: 代理
         StringBuilder url = new StringBuilder()
                 .append(jusicProperties.getMusicServeDomain())
                 .append("/netease/songs/")

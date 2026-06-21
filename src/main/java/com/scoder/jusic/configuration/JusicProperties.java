@@ -79,6 +79,10 @@ public class JusicProperties {
     private String musicServeDomainQq = "http://localhost";
     private String musicServeDomainMg = "http://localhost";
 
+    private String neteaseCookie = "";
+    private String qqCookie = "";
+    private String bilibiliCookie = "";
+
     /**
      * mail send from
      */
