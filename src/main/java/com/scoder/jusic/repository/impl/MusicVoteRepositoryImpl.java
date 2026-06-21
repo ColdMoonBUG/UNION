@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.context.annotation.Profile;
 
 import java.util.Set;
 
@@ -13,6 +14,7 @@ import java.util.Set;
  * @author H
  */
 @Repository
+@Profile("redis")
 @Slf4j
 public class MusicVoteRepositoryImpl implements MusicVoteRepository {
 

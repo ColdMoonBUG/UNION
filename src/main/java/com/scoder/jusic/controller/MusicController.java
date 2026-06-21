@@ -78,6 +78,14 @@ public class MusicController {
             }
         }else if("lz".equals(music.getSource())){
             pick = musicService.getLZMusic(Integer.valueOf(music.getId()));
+        }else if("local".equals(music.getSource())){
+            pick = new Music();
+            pick.setId(music.getId());
+            pick.setName(music.getName());
+            pick.setUrl(music.getId());
+            pick.setSource("local");
+            pick.setDuration(music.getDuration() != null && music.getDuration() > 0 ? music.getDuration() : 0L);
+            pick.setArtist("本地上传");
         }else{
             pick = musicService.getMusic(music.getId() == null?music.getName():music.getId());
         }
@@ -447,9 +455,14 @@ public class MusicController {
             log.info("session: {} 尝试搜索音乐, 但关键字为空", sessionId);
             sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "请输入要搜索的关键字"));
         }
-        Page<List<Music>> page = musicService.search(music, hulkPage);
-        log.info("session: {} 尝试搜索音乐, 关键字: {}, 即将向该用户推送结果", accessor.getHeader("simpSessionId"), music.getName());
-        sessionService.send(sessionId, MessageType.SEARCH, Response.success(page, "搜索结果"));
+        try {
+            Page<List<Music>> page = musicService.search(music, hulkPage);
+            log.info("session: {} 尝试搜索音乐, 关键字: {}, 即将向该用户推送结果", accessor.getHeader("simpSessionId"), music.getName());
+            sessionService.send(sessionId, MessageType.SEARCH, Response.success(page, "搜索结果"));
+        } catch (Exception e) {
+            log.warn("session: {} 搜索音乐失败, source: {}, 原因: {}", sessionId, music.getSource(), e.getMessage());
+            sessionService.send(sessionId, MessageType.NOTICE, Response.failure((Object) null, "当前音乐源不可用，请使用本地上传"));
+        }
     }
 
     private void updatePlayMode(StompHeaderAccessor accessor, String playMode, MessageType messageType, String successMessage) {

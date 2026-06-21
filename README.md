@@ -69,6 +69,15 @@
 6. 启动项目
 
    ```
+   > start.bat
+   ```
+
+   Windows 下推荐直接运行仓库根目录的 `start.bat`，它会自动检查 Redis、启动后端，并在服务可用后打开浏览器页面。
+   如果你的 Redis 不在 PATH 中，可以通过环境变量 `REDIS_SERVER_EXE` 指定 `redis-server.exe` 的完整路径。
+
+   如果只想手动启动后端，也可以继续使用：
+
+   ```
    > java -jar jusic-serve.jar
    ```
 

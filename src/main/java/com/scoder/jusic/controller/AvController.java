@@ -37,8 +37,12 @@ public class AvController {
     @MessageMapping("/av/playback/state")
     public void playbackState(AvPlaybackState state, StompHeaderAccessor accessor) {
         String sessionId = accessor.getHeader("simpSessionId").toString();
-        AvPlaybackState currentState = avService.updatePlaybackState(sessionId, state);
-        sessionService.sendRoom(currentState.getRoomId(), MessageType.AV_PLAYBACK_STATE, Response.success(currentState, "播放状态"));
+        try {
+            AvPlaybackState currentState = avService.updatePlaybackState(sessionId, state);
+            sessionService.sendRoom(currentState.getRoomId(), MessageType.AV_PLAYBACK_STATE, Response.success(currentState, "播放状态"));
+        } catch (IllegalArgumentException e) {
+            sessionService.send(sessionId, MessageType.AV_PLAYBACK_STATE, Response.failure((AvPlaybackState) null, e.getMessage()));
+        }
     }
 
     @MessageMapping("/av/playback/get")

@@ -20,7 +20,7 @@ public interface HouseService {
 
     House getRaw(String houseId);
 
-    String create(HouseRequest request);
+    String create(HouseRequest request, String ownerSessionId);
 
     House enter(String houseId, String password);
 

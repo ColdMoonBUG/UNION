@@ -18,7 +18,7 @@ public class HouseRequest {
 
     private String desc;
 
-    private HouseType roomType;
+    private String roomType;
 
     private Boolean needPwd = false;
 

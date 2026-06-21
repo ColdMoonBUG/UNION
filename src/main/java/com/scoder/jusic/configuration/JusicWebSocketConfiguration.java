@@ -40,8 +40,7 @@ public class JusicWebSocketConfiguration implements WebSocketMessageBrokerConfig
                 .addInterceptors(jusicWebSocketHandshakeInterceptor)
                 // 允许所有域
                 .setAllowedOrigins("*")
-                // 支持以 SockJs 的方式建立连接，这是一个备选方案，在 WebSocket 不可用的时候启用
-                .withSockJS();
+                ;
     }
 
     /**

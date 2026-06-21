@@ -22,6 +22,12 @@ public class AvPlaybackState extends Message {
 
     private String mediaUrl;
 
+    private String originUrl;
+
+    private String sourceType;
+
+    private String posterUrl;
+
     private String title;
 
     private Long positionMs;
@@ -33,5 +39,9 @@ public class AvPlaybackState extends Message {
     private Long updatedAt;
 
     private Boolean playing;
+
+    private Long resolvedAt;
+
+    private String updatedBy;
 
 }

@@ -43,27 +43,29 @@ public class JusicWebSocketHandlerAsync {
 
     @Async
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String roomId = this.getRoomId(session);
+        String requestedRoomId = this.getRoomId(session);
         try {
-            this.validateRoomAccess(roomId, this.getHousePassword(session));
+            this.validateRoomAccess(requestedRoomId, this.getHousePassword(session));
         } catch (IllegalArgumentException e) {
-            log.info("Connection rejected: {}, room: {}, reason: {}", session.getId(), roomId, e.getMessage());
+            log.info("Connection rejected: {}, room: {}, reason: {}", session.getId(), requestedRoomId, e.getMessage());
             sessionService.send(session, MessageType.NOTICE, Response.failure((Object) null, e.getMessage()));
             session.close(new CloseStatus(4001, e.getMessage()));
             return;
         }
 
         sessionService.putSession(session);
-        int size = sessionService.size(roomId).intValue();
-        log.info("Connection established: {}, room: {}, ip: {}, and now online: {}", session.getId(), roomId, session.getAttributes().get("remoteAddress").toString(), size);
+        String currentRoomId = sessionService.getRoomId(session.getId());
+        int size = sessionService.size(currentRoomId).intValue();
+        log.info("Connection established: {}, room: {}, ip: {}, and now online: {}", session.getId(), currentRoomId, session.getAttributes().get("remoteAddress").toString(), size);
         Thread.sleep(500);
+        currentRoomId = sessionService.getRoomId(session.getId());
         sessionService.send(session, MessageType.NOTICE, Response.success((Object) null, "连接到服务器成功！"));
-        roomSnapshotService.broadcastOnline(roomId);
-        sessionService.sendRoom(roomId, MessageType.HOUSE_USER, Response.success(houseService.listUsers(roomId), "房间成员"));
-        roomSnapshotService.sendRoomSnapshot(session.getId(), roomId, true);
-        Music playing = musicService.getPlaying(roomId);
+        roomSnapshotService.broadcastOnline(currentRoomId);
+        sessionService.sendRoom(currentRoomId, MessageType.HOUSE_USER, Response.success(houseService.listUsers(currentRoomId), "房间成员"));
+        roomSnapshotService.sendRoomSnapshot(session.getId(), currentRoomId, true);
+        Music playing = musicService.getPlaying(currentRoomId);
         String playingName = playing == null ? "null" : playing.getName();
-        log.info("发现有客户端连接, 房间: {}, 已向该客户端: {} 发送正在播放的音乐: {}, 以及播放列表, 共 {} 首", roomId, session.getId(), playingName, musicService.getPickList(roomId).size());
+        log.info("发现有客户端连接, 房间: {}, 已向该客户端: {} 发送正在播放的音乐: {}, 以及播放列表, 共 {} 首", currentRoomId, session.getId(), playingName, musicService.getPickList(currentRoomId).size());
     }
 
     @Async

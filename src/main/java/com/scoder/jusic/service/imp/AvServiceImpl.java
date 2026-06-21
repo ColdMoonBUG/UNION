@@ -5,7 +5,9 @@ import com.scoder.jusic.model.AvPlaybackState;
 import com.scoder.jusic.model.AvSignal;
 import com.scoder.jusic.model.MessageType;
 import com.scoder.jusic.model.User;
+import com.scoder.jusic.model.AvMediaResolveResult;
 import com.scoder.jusic.repository.AvPlaybackStateRepository;
+import com.scoder.jusic.service.AvMediaResolveService;
 import com.scoder.jusic.service.AvService;
 import com.scoder.jusic.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,8 @@ public class AvServiceImpl implements AvService {
     private SessionService sessionService;
     @Autowired
     private AvPlaybackStateRepository avPlaybackStateRepository;
+    @Autowired
+    private AvMediaResolveService avMediaResolveService;
 
     @Override
     public void signal(String sessionId, AvSignal signal) {
@@ -50,6 +54,7 @@ public class AvServiceImpl implements AvService {
         AvPlaybackState currentState = state == null ? new AvPlaybackState() : state;
         currentState.setSessionId(sessionId);
         currentState.setNickName(sessionService.getNickName(sessionId));
+        currentState.setUpdatedBy(sessionService.getNickName(sessionId));
         currentState.setRoomId(roomId);
         currentState.setPushTime(System.currentTimeMillis());
         if (currentState.getUpdatedAt() == null) {
@@ -61,6 +66,7 @@ public class AvServiceImpl implements AvService {
         if (currentState.getVolume() == null) {
             currentState.setVolume(1D);
         }
+        this.normalizeSource(currentState, false);
         AvPlaybackState storedState = avPlaybackStateRepository.get(roomId);
         if (this.isStalePlayback(currentState, storedState)) {
             return storedState;
@@ -71,7 +77,13 @@ public class AvServiceImpl implements AvService {
 
     @Override
     public AvPlaybackState getPlaybackState(String roomId) {
-        return avPlaybackStateRepository.get(roomId);
+        AvPlaybackState state = avPlaybackStateRepository.get(roomId);
+        if (state == null) {
+            return null;
+        }
+        this.normalizeSource(state, true);
+        avPlaybackStateRepository.set(roomId, state);
+        return state;
     }
 
     @Override
@@ -90,6 +102,86 @@ public class AvServiceImpl implements AvService {
         Long currentUpdatedAt = currentState.getUpdatedAt();
         Long storedUpdatedAt = storedState.getUpdatedAt();
         return currentUpdatedAt != null && storedUpdatedAt != null && currentUpdatedAt < storedUpdatedAt;
+    }
+
+    private void normalizeSource(AvPlaybackState state, boolean allowRefresh) {
+        if (state == null) {
+            return;
+        }
+        String sourceType = this.safeTrim(state.getSourceType());
+        String originUrl = this.safeTrim(state.getOriginUrl());
+        String mediaUrl = this.safeTrim(state.getMediaUrl());
+        String guessedType = this.guessSourceType(originUrl, mediaUrl);
+        if ("".equals(sourceType) || ("bilibili".equals(guessedType) && !"bilibili".equalsIgnoreCase(sourceType))) {
+            sourceType = guessedType;
+            state.setSourceType(sourceType);
+        }
+        if ("".equals(originUrl)) {
+            originUrl = mediaUrl;
+            state.setOriginUrl(originUrl);
+        }
+        if (!this.shouldResolve(sourceType, allowRefresh, state.getResolvedAt(), mediaUrl, originUrl)) {
+            if (state.getResolvedAt() == null) {
+                state.setResolvedAt(System.currentTimeMillis());
+            }
+            return;
+        }
+        try {
+            AvMediaResolveResult result = avMediaResolveService.resolve(originUrl, state.getTitle());
+            if (result != null) {
+                if (!"".equals(this.safeTrim(result.getMediaUrl()))) {
+                    state.setMediaUrl(result.getMediaUrl());
+                }
+                if (!"".equals(this.safeTrim(result.getOriginUrl()))) {
+                    state.setOriginUrl(result.getOriginUrl());
+                }
+                if (!"".equals(this.safeTrim(result.getSourceType()))) {
+                    state.setSourceType(result.getSourceType());
+                }
+                if (!"".equals(this.safeTrim(result.getTitle()))) {
+                    state.setTitle(result.getTitle());
+                }
+                if (!"".equals(this.safeTrim(result.getMediaId()))) {
+                    state.setMediaId(result.getMediaId());
+                }
+                if (!"".equals(this.safeTrim(result.getPosterUrl()))) {
+                    state.setPosterUrl(result.getPosterUrl());
+                }
+                state.setResolvedAt(result.getResolvedAt());
+            }
+        } catch (IllegalArgumentException e) {
+            if (!allowRefresh) {
+                throw e;
+            }
+        }
+    }
+
+    private boolean shouldResolve(String sourceType, boolean allowRefresh, Long resolvedAt, String mediaUrl, String originUrl) {
+        if (!"bilibili".equalsIgnoreCase(this.safeTrim(sourceType))) {
+            return false;
+        }
+        if (resolvedAt == null) {
+            return true;
+        }
+        if (!allowRefresh) {
+            return false;
+        }
+        long age = System.currentTimeMillis() - resolvedAt;
+        return age > 90L * 60L * 1000L;
+    }
+
+    private String guessSourceType(String originUrl, String mediaUrl) {
+        String current = (this.safeTrim(originUrl) + " " + this.safeTrim(mediaUrl)).toLowerCase();
+        if (current.contains("bilibili.com") || current.contains("b23.tv") || current.contains("bili2233.cn")) {
+            return "bilibili";
+        }
+        if (current.startsWith("/av/media/files/") || current.contains("/av/media/files/")) {
+            return "upload";
+        }
+        if (current.endsWith(".m3u8")) {
+            return "stream";
+        }
+        return "direct";
     }
 
     private String safeTrim(String value) {

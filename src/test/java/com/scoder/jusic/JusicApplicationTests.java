@@ -1,12 +1,18 @@
 package com.scoder.jusic;
 
+import com.scoder.jusic.configuration.JusicInitializing;
+import com.scoder.jusic.job.MusicTopJob;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 @SpringBootTest
 class JusicApplicationTests {
 
-    private static final String url = "http://127.0.0.1:8080";
+    @MockBean
+    private JusicInitializing jusicInitializing;
+    @MockBean
+    private MusicTopJob musicTopJob;
 
     @Test
     void contextLoads() {

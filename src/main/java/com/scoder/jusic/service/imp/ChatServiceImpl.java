@@ -48,7 +48,8 @@ public class ChatServiceImpl implements ChatService {
 
             hulkPage.setData(jsonObject.getJSONArray("rows"));
         } catch (UnirestException e) {
-            e.printStackTrace();
+            log.warn("表情包搜索失败, keyword: {}, pageIndex: {}, pageSize: {}, reason: {}",
+                    keyword, hulkPage.getPageIndex(), hulkPage.getPageSize(), e.getMessage());
         }
 
         return hulkPage;

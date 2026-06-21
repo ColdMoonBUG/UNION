@@ -1,8 +1,10 @@
 package com.scoder.jusic.service.imp;
 
 import com.scoder.jusic.configuration.JusicProperties;
+import com.scoder.jusic.model.House;
 import com.scoder.jusic.model.User;
 import com.scoder.jusic.repository.ConfigRepository;
+import com.scoder.jusic.service.HouseService;
 import com.scoder.jusic.repository.SessionRepository;
 import com.scoder.jusic.service.AuthService;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,8 @@ public class AuthServiceImpl implements AuthService {
     private SessionRepository sessionRepository;
     @Autowired
     private ConfigRepository configRepository;
+    @Autowired
+    private HouseService houseService;
 
     @Override
     public boolean authRoot(String sessionId, String password) {
@@ -46,23 +50,22 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public boolean authAdmin(String sessionId, String password) {
-        if (null == password) {
+        User user = sessionRepository.getSession(sessionId);
+        if (user == null) {
             return false;
         }
-        String adminPassword = configRepository.getAdminPassword();
-        if (null == adminPassword) {
-            adminPassword = jusicProperties.getRoleRootPassword();
-            configRepository.initAdminPassword();
+        String roomId = user.getRoomId();
+        House house = houseService.getRaw(roomId);
+        if (house == null) {
+            return false;
         }
-        if (password.equals(adminPassword)) {
-            // update role
-            User user = sessionRepository.getSession(sessionId);
-            user.setRole("admin");
-            sessionRepository.setSession(user);
-
-            return true;
+        String ownerSessionId = house.getOwnerSessionId();
+        if (ownerSessionId == null || !ownerSessionId.equals(sessionId)) {
+            return false;
         }
-        return false;
+        user.setRole("admin");
+        sessionRepository.setSession(user);
+        return true;
     }
 
 }

@@ -1,10 +1,8 @@
 package com.scoder.jusic.configuration;
 
 import com.scoder.jusic.repository.*;
-import com.scoder.jusic.job.MusicTopJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author H
@@ -32,10 +31,6 @@ public class JusicInitializing implements InitializingBean {
     private final SessionBlackRepository sessionBlackRepository;
     private final HouseRepository houseRepository;
     private final AvPlaybackStateRepository avPlaybackStateRepository;
-
-    @Autowired
-    private MusicTopJob musicTopJob;
-
 
     public JusicInitializing(ConfigRepository configRepository, SessionRepository sessionRepository, MusicDefaultRepository musicDefaultRepository, MusicPlayingRepository musicPlayingRepository, MusicPickRepository musicPickRepository, MusicVoteRepository musicVoteRepository, JusicProperties jusicProperties, ResourceLoader resourceLoader, SessionBlackRepository sessionBlackRepository, HouseRepository houseRepository, AvPlaybackStateRepository avPlaybackStateRepository) {
         this.configRepository = configRepository;
@@ -63,24 +58,25 @@ public class JusicInitializing implements InitializingBean {
      * @throws IOException -
      */
     private void initDefaultMusicId() throws IOException {
-        try{
-            ArrayList<String> musicList = musicTopJob.getMusicTop();
-            if(musicList == null || musicList.size() == 0){
-                InputStream inputStream = resourceLoader.getResource(jusicProperties.getDefaultMusicFile()).getInputStream();
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                String musicId = "";
-                // 逐行读取
-                while ((musicId = bufferedReader.readLine()) != null) {
-                    musicList.add(musicId);
+        ArrayList<String> musicList = new ArrayList<>();
+        try (InputStream inputStream = resourceLoader.getResource(jusicProperties.getDefaultMusicFile()).getInputStream();
+             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            String musicId;
+            while ((musicId = bufferedReader.readLine()) != null) {
+                String id = musicId.trim();
+                if (!"".equals(id)) {
+                    musicList.add(id);
                 }
-                musicList.add("512359558");
-                musicList.add("316686");
-                musicList.add("25718007");
             }
-            JusicProperties.setDefaultListByJob(musicList);
-        }catch (Exception e){
-
+        } catch (Exception e) {
+            log.warn("读取默认歌单失败，使用内置兜底列表: {}", e.getMessage());
         }
+        if (musicList.isEmpty()) {
+            musicList.add("512359558");
+            musicList.add("316686");
+            musicList.add("25718007");
+        }
+        JusicProperties.setDefaultListByJob(musicList);
     }
 
     /**

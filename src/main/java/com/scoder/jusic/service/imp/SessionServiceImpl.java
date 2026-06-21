@@ -46,8 +46,8 @@ public class SessionServiceImpl implements SessionService {
         } else {
             log.info("setting name: {}", name);
             User user = sessionRepository.getSession(sessionId);
-            user.setName(name);
-            user.setNickName(user.getName() + "(" + StringUtils.desensitizeIPV4(user.getRemoteAddress()) + ")");
+            user.setName(name.trim());
+            user.setNickName(user.getName());
             sessionRepository.setSession(user);
         }
     }
@@ -272,7 +272,7 @@ public class SessionServiceImpl implements SessionService {
             payload.append("\n")
                     .append("content-length:").append(StringUtils.getLength(jsonString, StringUtils.ENCODE_UTF_8));
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            throw new IllegalStateException("UTF-8 编码不可用", e);
         }
         payload.append("\n")
                 .append("\n")

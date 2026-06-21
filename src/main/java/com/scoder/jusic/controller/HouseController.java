@@ -52,7 +52,7 @@ public class HouseController {
     @ResponseBody
     public Response<String> add(@RequestBody HouseRequest request) {
         try {
-            String houseId = houseService.create(request);
+            String houseId = houseService.create(request, null);
             return Response.success(houseId, "建房成功");
         } catch (IllegalArgumentException e) {
             return Response.failure((String) null, e.getMessage());
@@ -106,7 +106,7 @@ public class HouseController {
         String sessionId = accessor.getHeader("simpSessionId").toString();
         try {
             sessionService.send(sessionId, MessageType.ADD_HOUSE_START, Response.success((Object) null, "开始建房"));
-            String houseId = houseService.create(request);
+            String houseId = houseService.create(request, sessionId);
             String previousRoomId = houseService.bindSession(sessionId, houseId);
             sessionService.send(sessionId, MessageType.ADD_HOUSE, Response.success(houseId, "建房成功"));
             this.afterRoomSwitch(sessionId, previousRoomId, houseId);

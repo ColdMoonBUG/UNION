@@ -63,17 +63,19 @@ public class HouseServiceImpl implements HouseService {
     }
 
     @Override
-    public String create(HouseRequest request) {
+    public String create(HouseRequest request, String ownerSessionId) {
         this.validateCreateRequest(request);
         String houseId = this.createHouseId();
         House house = House.builder()
                 .id(houseId)
                 .name(this.safeTrim(request.getName()))
                 .desc(this.safeTrim(request.getDesc()))
+                .roomType(this.normalizeRoomType(request.getRoomType()))
                 .needPwd(Boolean.TRUE.equals(request.getNeedPwd()))
                 .password(Boolean.TRUE.equals(request.getNeedPwd()) ? this.safeTrim(request.getPassword()) : "")
                 .enableStatus(Boolean.TRUE.equals(request.getEnableStatus()))
                 .retainKey(this.safeTrim(request.getRetainKey()))
+                .ownerSessionId(this.safeTrim(ownerSessionId))
                 .population(0)
                 .announce(new Notice())
                 .build();
@@ -133,6 +135,7 @@ public class HouseServiceImpl implements HouseService {
 
     private House fillPopulation(House source) {
         return source.toBuilder()
+                .roomType(this.normalizeRoomType(source.getRoomType()))
                 .population(sessionService.size(source.getId()).intValue())
                 .build();
     }
@@ -152,6 +155,7 @@ public class HouseServiceImpl implements HouseService {
                 .id(DEFAULT_HOUSE_ID)
                 .name("公共房间")
                 .desc("默认公共房间")
+                .roomType("music")
                 .needPwd(false)
                 .password("")
                 .enableStatus(false)
@@ -204,5 +208,9 @@ public class HouseServiceImpl implements HouseService {
 
     private String safeTrim(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String normalizeRoomType(String roomType) {
+        return "cinema".equals(this.safeTrim(roomType)) ? "cinema" : "music";
     }
 }

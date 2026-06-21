@@ -28,7 +28,7 @@ public class House implements Serializable {
 
     private String desc;
 
-    private HouseType roomType;
+    private String roomType;
 
     private Boolean needPwd = false;
 
@@ -37,6 +37,8 @@ public class House implements Serializable {
     private Boolean enableStatus = false;
 
     private String retainKey;
+
+    private String ownerSessionId;
 
     private Integer population = 0;
 

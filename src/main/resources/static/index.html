@@ -22,8 +22,8 @@ input,select,textarea{
   padding:8px 12px;border-radius:8px;font-size:14px;outline:none;
   transition:border-color .15s;font-family:inherit;
 }
-input:focus,select:focus{border-color:var(--accent)}
-input::placeholder{color:var(--text3)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input::placeholder,textarea::placeholder{color:var(--text3)}
 .btn{
   padding:8px 18px;border-radius:8px;border:none;cursor:pointer;
   font-size:14px;font-weight:500;transition:opacity .15s,background .15s;
@@ -49,7 +49,7 @@ input::placeholder{color:var(--text3)}
 .modal h2{font-size:17px;font-weight:700;margin-bottom:20px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px}
-.field input,.field select{width:100%}
+.field input,.field select,.field textarea{width:100%}
 .check-row{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;padding:4px 0}
 .check-row input[type=checkbox]{width:auto;cursor:pointer}
 .modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
@@ -73,6 +73,7 @@ input::placeholder{color:var(--text3)}
 .lobby-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
 .logo{font-size:26px;font-weight:800;letter-spacing:-.5px}
 .logo em{color:var(--accent2);font-style:normal}
+.lobby-sub{font-size:13px;color:var(--text2);margin-top:6px}
 .lobby-bar{display:flex;gap:10px;margin-bottom:20px;align-items:center}
 .lobby-bar input{flex:1}
 .toggle{
@@ -96,7 +97,7 @@ input::placeholder{color:var(--text3)}
   width:100%;
 }
 .room-card{
-  background:#ff0000;border:1px solid #ff6b6b;border-radius:12px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:12px;
   padding:12px 14px;cursor:pointer;transition:border-color .15s,transform .1s,box-shadow .15s;
   width:220px;min-height:112px;max-height:112px;align-self:start;
   display:flex;flex-direction:column;justify-content:space-between;gap:8px;overflow:hidden;
@@ -112,6 +113,8 @@ input::placeholder{color:var(--text3)}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block}
 .dot.off{background:var(--text3)}
 .tag{font-size:11px;padding:2px 7px;border-radius:10px;background:rgba(99,102,241,.15);color:var(--accent2)}
+.tag-cinema{background:rgba(14,165,233,.14);color:#7dd3fc}
+.tag-music{background:rgba(34,197,94,.14);color:#86efac}
 .empty-state{grid-column:1/-1;padding:40px 0;text-align:center;color:var(--text2)}
 
 /* 房间 */
@@ -122,6 +125,9 @@ input::placeholder{color:var(--text3)}
 }
 .topbar-name{font-weight:600;font-size:15px;white-space:nowrap}
 .topbar-desc{font-size:12px;color:var(--text2);flex:1 1 240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.topbar-type{font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(34,197,94,.14);color:#86efac;white-space:nowrap}
+.topbar-type.cinema{background:rgba(14,165,233,.14);color:#7dd3fc}
+.topbar-type.music{background:rgba(34,197,94,.14);color:#86efac}
 .online{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text2);white-space:nowrap}
 .my-nick{font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap}
 .my-nick:hover{color:var(--text)}
@@ -143,9 +149,15 @@ input::placeholder{color:var(--text3)}
   overflow:auto;
   align-items:start;
 }
+.room-body.cinema{
+  grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);
+  grid-template-areas:
+    'cinema cinema-side'
+    'chat cinema-side';
+}
 
 /* 卡片通用 */
-.player-col,.queue-col,.chat-col{
+.player-col,.queue-col,.chat-col,.cinema-col,.cinema-side{
   background:var(--bg2);
   border:1px solid var(--border);
   border-radius:14px;
@@ -156,7 +168,7 @@ input::placeholder{color:var(--text3)}
   box-shadow:0 10px 24px rgba(0,0,0,.16);
 }
 
-/* 播放器栏 */
+/* 音乐厅 */
 .player-col{grid-area:player;min-width:0;position:sticky;top:0}
 .cover-wrap{padding:16px 16px 0;flex-shrink:0}
 .cover-img{width:100%;aspect-ratio:1;border-radius:10px;object-fit:cover;display:block}
@@ -169,6 +181,10 @@ input::placeholder{color:var(--text3)}
 .prog-bar{height:4px;background:var(--bg3);border-radius:2px;cursor:pointer;margin-bottom:4px;position:relative;overflow:hidden}
 .prog-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .5s linear}
 .prog-time{display:flex;justify-content:space-between;font-size:11px;color:var(--text3)}
+.music-progress,.cinema-progress{min-width:0}
+.cinema-progress.progress{padding:0;flex:1 1 260px}
+.cinema-controls{align-items:flex-end}
+.cinema-progress .prog-bar{margin-bottom:6px}
 .lyrics{flex:1;min-height:0;max-height:220px;overflow-y:auto;padding:10px 16px;font-size:13px;line-height:2;text-align:center;color:var(--text3)}
 .lrc-line{transition:color .3s;padding:0 2px}
 .lrc-line.cur{color:var(--text);font-weight:500}
@@ -176,6 +192,27 @@ input::placeholder{color:var(--text3)}
 .mode-tag{padding:4px 10px;border-radius:20px;background:var(--bg3);font-size:12px;color:var(--text2);cursor:default}
 .skip-btn{padding:4px 12px;border-radius:20px;background:var(--bg2);border:1px solid var(--border);font-size:12px;color:var(--text);cursor:pointer;transition:border-color .15s}
 .skip-btn:hover{border-color:var(--accent)}
+.music-play-btn{padding:4px 12px;border-radius:20px;background:var(--accent);border:1px solid var(--accent);font-size:12px;color:#fff;cursor:pointer;transition:opacity .15s}
+.music-play-btn:hover{opacity:.85}
+
+/* 影院 */
+.cinema-col{grid-area:cinema;padding:14px;gap:12px}
+.cinema-player-wrap{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.cinema-player{width:100%;display:block;max-height:72vh;background:#020617}
+.cinema-empty{aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:15px;background:linear-gradient(135deg,#0f172a,#1e293b)}
+.cinema-meta{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cinema-title{font-size:16px;font-weight:600}
+.cinema-sub{font-size:12px;color:var(--text2);margin-top:4px}
+.cinema-badge{font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(14,165,233,.14);color:#7dd3fc}
+.cinema-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cinema-progress{flex:1 1 240px}
+.cinema-actions{display:flex;gap:8px;flex-wrap:wrap}
+.cinema-side{grid-area:cinema-side}
+.cinema-form{padding:12px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--border)}
+.cinema-form .field{margin-bottom:0}
+.cinema-form-row{display:flex;gap:8px;flex-wrap:wrap}
+.cinema-form-row input,.cinema-form-row select{flex:1;min-width:0}
+.cinema-note{font-size:12px;color:var(--text3);line-height:1.5}
 
 /* 队列栏 */
 .queue-col{grid-area:queue;min-width:0;min-height:360px}
@@ -207,6 +244,7 @@ input::placeholder{color:var(--text3)}
 .u-chip{padding:2px 8px;border-radius:20px;font-size:12px;background:var(--bg3);color:var(--text2);white-space:nowrap}
 .u-chip.admin{background:rgba(99,102,241,.2);color:var(--accent2)}
 .u-chip.root{background:rgba(239,68,68,.2);color:#f87171}
+.u-chip.owner{background:rgba(245,158,11,.18);color:#fbbf24}
 .u-chip.me{border:1px solid var(--accent)}
 .messages{flex:1;min-height:0;max-height:none;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px}
 .msg{font-size:13px;line-height:1.5}
@@ -225,19 +263,24 @@ input::placeholder{color:var(--text3)}
 .auth-wrap label{font-size:11px;color:var(--text3);display:block;margin-bottom:5px}
 .auth-row{display:flex;gap:5px}
 .auth-row input{flex:1;padding:6px 8px;font-size:13px;min-width:0}
+.auth-note{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5}
+.topbar-owner{font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(245,158,11,.14);color:#fbbf24;white-space:nowrap}
 
 @media (max-width: 1100px){
   #room{height:auto;min-height:100vh}
-  .room-body{
+  .room-body,
+  .room-body.cinema{
     grid-template-columns:1fr;
     grid-template-areas:
       'player'
       'queue'
+      'cinema'
+      'cinema-side'
       'chat';
     overflow:visible;
   }
   .player-col{position:static}
-  .player-col,.queue-col,.chat-col{width:100%}
+  .player-col,.queue-col,.chat-col,.cinema-col,.cinema-side{width:100%}
   .queue-col{min-height:360px}
   .chat-col{min-height:280px}
   .cover-wrap{max-width:240px;margin:0 auto;padding-top:18px}
@@ -253,16 +296,19 @@ input::placeholder{color:var(--text3)}
   .topbar-desc{flex-basis:100%;white-space:normal;overflow:visible;text-overflow:clip}
   .online,.my-nick{font-size:12px}
   .announce{padding:8px 14px;line-height:1.5}
-  .room-body{
+  .room-body,
+  .room-body.cinema{
     grid-template-columns:1fr;
     grid-template-areas:
       'player'
       'queue'
+      'cinema'
+      'cinema-side'
       'chat';
     overflow:visible;
     padding:10px;
   }
-  .player-col,.queue-col,.chat-col{width:100%;min-width:0;max-width:none}
+  .player-col,.queue-col,.chat-col,.cinema-col,.cinema-side{width:100%;min-width:0;max-width:none}
   .player-col{position:static}
   .cover-wrap{max-width:220px;padding:14px 14px 0}
   .music-meta,.progress,.player-ctrl{padding-left:14px;padding-right:14px}
@@ -304,6 +350,91 @@ input::placeholder{color:var(--text3)}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
+
+/* 封面旋转 */
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.cover-img.rotating{animation:spin 8s linear infinite}
+.cover-ph.rotating{animation:spin 8s linear infinite}
+
+/* 连接状态 dot 三态 */
+.conn-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;transition:background .3s}
+.conn-dot.connected{background:var(--green)}
+.conn-dot.reconnecting{background:#f59e0b;animation:pulse .8s ease-in-out infinite}
+.conn-dot.disconnected{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* autoplay 拦截横幅 */
+.autoplay-banner{
+  padding:6px 16px;font-size:12px;color:#fbbf24;
+  background:rgba(245,158,11,.1);border-bottom:1px solid rgba(245,158,11,.2);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.autoplay-banner.hidden{display:none}
+
+/* 播放按钮被拦截时高亮 */
+.music-play-btn.blocked{background:#f59e0b;border-color:#f59e0b}
+.btn.av-blocked{background:#f59e0b;border-color:#f59e0b;animation:pulse .8s ease-in-out infinite}
+
+/* 进度条拖拽 */
+.prog-bar{cursor:pointer;user-select:none}
+.prog-bar.dragging .prog-fill{transition:none}
+
+/* 音量控制 */
+.vol-wrap{display:flex;align-items:center;gap:6px;padding:0 16px 10px;flex-shrink:0}
+.vol-label{font-size:12px;color:var(--text3);white-space:nowrap}
+.vol-slider{flex:1;accent-color:var(--accent)}
+
+/* 上传进度条 */
+.upload-progress-wrap{padding:0 10px 8px;flex-shrink:0}
+.upload-progress-bar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.upload-progress-fill{height:100%;background:var(--accent);width:0%;transition:width .2s}
+.upload-progress-text{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* 管理控制台分组 */
+.admin-group{padding:0 10px 8px}
+.admin-group-label{font-size:11px;color:var(--text3);padding:6px 0 4px;border-top:1px solid var(--border)}
+.admin-group:first-child .admin-group-label{border-top:none}
+.admin-btns-wrap{display:flex;flex-wrap:wrap;gap:5px}
+
+/* 播放模式按钮激活态 */
+.mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* 用户操作菜单 */
+.u-menu{
+  position:fixed;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:4px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.3);
+  min-width:120px;
+}
+.u-menu-item{
+  padding:7px 12px;font-size:13px;cursor:pointer;border-radius:6px;
+  transition:background .1s;white-space:nowrap;
+}
+.u-menu-item:hover{background:var(--bg3)}
+.u-menu-item.danger{color:var(--red)}
+.u-chip.clickable{cursor:pointer}
+.u-chip.clickable:hover{border:1px solid var(--accent)}
+
+/* 影院加载 spinner */
+.cinema-loading{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.4);pointer-events:none;
+}
+.cinema-loading.hidden{display:none}
+.spinner{width:32px;height:32px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+
+/* 影院聊天浮层 */
+.cinema-chat-overlay{
+  position:absolute;bottom:16px;right:16px;max-width:260px;
+  display:flex;flex-direction:column;gap:4px;pointer-events:none;z-index:10;
+}
+.cinema-chat-msg{
+  font-size:12px;background:rgba(0,0,0,.55);color:#fff;
+  padding:4px 10px;border-radius:16px;backdrop-filter:blur(4px);
+  animation:fadeInChat .2s ease;
+  transition:opacity .4s;
+}
+@keyframes fadeInChat{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.cinema-player-wrap{position:relative}
 </style>
 </head>
 <body>
@@ -335,14 +466,18 @@ input::placeholder{color:var(--text3)}
       <div class="topbar-name" id="r-name">公共房间</div>
       <div class="topbar-desc" id="r-desc"></div>
     </div>
+    <span class="topbar-type" id="r-type">音乐厅</span>
+    <span class="topbar-owner hidden" id="r-owner">房主</span>
     <span class="room-route" id="room-route">/</span>
-    <div class="online"><span class="dot" id="r-dot"></span><span id="r-online">0</span> 人</div>
+    <div class="online"><span class="conn-dot disconnected" id="r-dot"></span><span id="r-online">0</span> 人</div>
     <span class="my-nick" id="my-nick" onclick="UI.nickModal()">匿名</span>
   </div>
   <div class="announce hidden" id="announce"></div>
-  <div class="room-body">
-    <!-- 播放器 -->
-    <div class="player-col">
+  <div class="room-body" id="room-body">
+    <div class="player-col" id="music-player-col">
+      <div class="autoplay-banner hidden" id="music-autoplay-banner">
+        &#9888; 自动播放被拦截，点击播放按钮继续
+      </div>
       <div class="cover-wrap">
         <div class="cover-ph" id="cover-ph">&#9835;</div>
         <img class="cover-img hidden" id="cover-img" alt="">
@@ -353,19 +488,24 @@ input::placeholder{color:var(--text3)}
         <div class="music-picker" id="m-picker"></div>
       </div>
       <div class="progress">
-        <div class="prog-bar" id="prog-bar" onclick="Player.seek(event)">
+        <div class="prog-bar" id="prog-bar">
           <div class="prog-fill" id="prog-fill"></div>
         </div>
         <div class="prog-time"><span id="t-cur">0:00</span><span id="t-total">0:00</span></div>
       </div>
+      <div class="vol-wrap">
+        <span class="vol-label">音量</span>
+        <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.02" value="1">
+      </div>
       <div class="lyrics" id="lyrics"></div>
       <div class="player-ctrl">
         <span class="mode-tag" id="mode-tag">顺序播放</span>
+        <button class="music-play-btn" id="music-play-btn" onclick="Player.togglePlay()">播放</button>
         <button class="skip-btn" onclick="WS.send('/music/skip/vote',{})">投票切歌</button>
       </div>
     </div>
-    <!-- 队列 -->
-    <div class="queue-col">
+
+    <div class="queue-col" id="music-queue-col">
       <div class="col-head">
         <span id="q-label">播放列表</span>
         <span id="q-count" style="font-weight:400">0 首</span>
@@ -380,18 +520,83 @@ input::placeholder{color:var(--text3)}
         </select>
         <button class="btn btn-primary btn-sm" onclick="Queue.search()">搜索</button>
       </div>
+      <div class="search-row" style="border-top:1px solid rgba(51,65,85,.3)">
+        <input id="music-local-file" type="file" accept=".mp3,.wav,.m4a,.aac,.flac,.ogg,.mp4,audio/*,video/mp4" onchange="Queue.uploadLocal()">
+      </div>
+      <div class="upload-progress-wrap hidden" id="music-upload-progress-wrap">
+        <div class="upload-progress-bar"><div class="upload-progress-fill" id="music-upload-fill"></div></div>
+        <div class="upload-progress-text" id="music-upload-text"></div>
+      </div>
+      <div class="search-row" style="padding-top:0;color:var(--text3);font-size:12px">
+        <div>支持本地音频上传到当前房间，适合直接一起听本机音乐。</div>
+      </div>
       <div class="queue-list" id="q-list"></div>
       <div class="search-panel hidden" id="s-panel"></div>
     </div>
-    <!-- 聊天 -->
+
+    <div class="cinema-col hidden" id="cinema-col">
+      <div class="cinema-player-wrap">
+        <video class="cinema-player hidden" id="av-video" controls playsinline preload="metadata"></video>
+        <div class="cinema-empty" id="av-empty">暂无视频，上传本地视频或粘贴直链开始一起看</div>
+        <div class="cinema-loading hidden" id="av-loading"><div class="spinner"></div></div>
+        <div class="cinema-chat-overlay" id="cinema-chat-overlay"></div>
+      </div>
+      <div class="cinema-meta">
+        <div>
+          <div class="cinema-title" id="av-title">一起看</div>
+          <div class="cinema-sub" id="av-sub">影院房支持本地上传与视频直链同步播放</div>
+        </div>
+        <span class="cinema-badge" id="av-status">未开始</span>
+      </div>
+      <div class="cinema-controls">
+        <div class="cinema-progress progress">
+          <div class="prog-bar" id="av-prog-bar">
+            <div class="prog-fill" id="av-prog-fill"></div>
+          </div>
+          <div class="prog-time"><span id="av-t-cur">0:00</span><span id="av-t-total">0:00</span></div>
+        </div>
+        <div class="cinema-actions">
+          <button class="btn btn-primary btn-sm" id="av-play-btn" onclick="Cinema.togglePlay()">播放</button>
+          <select id="av-rate" onchange="Cinema.changeRate()">
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1.0x</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2.0x</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="cinema-side hidden" id="cinema-side">
+      <div class="col-head">影院控制台</div>
+      <div class="cinema-form">
+        <div class="field">
+          <label>本地视频上传</label>
+          <input id="av-file" type="file" accept=".mp4,.webm,.mov,.mkv,.ogg,.m3u8,video/mp4,video/webm,video/*" onchange="Cinema.upload()">
+        </div>
+        <div class="field">
+          <label>视频直链</label>
+          <div class="cinema-form-row">
+            <input id="av-url" placeholder="输入 mp4 / webm / m3u8 / B站链接">
+            <button class="btn btn-primary btn-sm" onclick="Cinema.applyUrl()">加载</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>标题</label>
+          <input id="av-url-title" placeholder="可选，默认使用链接文件名">
+        </div>
+        <div class="cinema-note" id="av-upload-status">影院房会同步视频地址、播放 / 暂停、进度、倍速和音量。音乐厅房仍然保持现有一起听能力。</div>
+      </div>
+    </div>
+
     <div class="chat-col">
       <div class="col-head">在线成员</div>
       <div class="users-wrap" id="users"></div>
       <div class="col-head" style="border-top:1px solid var(--border)">聊天</div>
       <div class="messages" id="msgs"></div>
       <div class="chat-input">
-        <input id="c-input" placeholder="发送消息..." maxlength="200"
-               onkeydown="if(event.key==='Enter')Chat.send()">
+        <input id="c-input" placeholder="发送消息..." maxlength="200" onkeydown="if(event.key==='Enter')Chat.send()">
         <button class="btn btn-primary btn-sm" onclick="Chat.send()">发送</button>
       </div>
       <div class="admin-wrap">
@@ -399,22 +604,33 @@ input::placeholder{color:var(--text3)}
           <span>管理控制</span><span id="admin-arrow">&#9654;</span>
         </div>
         <div class="admin-btns hidden" id="admin-btns">
-          <button class="btn btn-ghost btn-xs" onclick="WS.send('/music/skip/vote',{})">强制切歌</button>
-          <button class="btn btn-ghost btn-xs" onclick="Admin.clear()">清空队列</button>
-          <button class="btn btn-ghost btn-xs" onclick="WS.send('/music/musiclistmodel/true',{})">顺序循环</button>
-          <button class="btn btn-ghost btn-xs" onclick="WS.send('/music/musiccirclemodel/true',{})">单曲循环</button>
-          <button class="btn btn-ghost btn-xs" onclick="WS.send('/music/randommodel/true',{})">随机播放</button>
-          <button class="btn btn-ghost btn-xs" onclick="Admin.toggleGood()">好歌模式</button>
+          <div class="admin-group">
+            <div class="admin-group-label">播放控制</div>
+            <div class="admin-btns-wrap">
+              <button class="btn btn-ghost btn-xs" onclick="WS.send('/music/skip/vote',{})">强制切歌</button>
+              <button class="btn btn-ghost btn-xs" onclick="Admin.clear()">清空队列</button>
+              <button class="btn btn-ghost btn-xs mode-btn" id="mode-btn-list" onclick="WS.send('/music/musiclistmodel/true',{})">顺序循环</button>
+              <button class="btn btn-ghost btn-xs mode-btn" id="mode-btn-circle" onclick="WS.send('/music/musiccirclemodel/true',{})">单曲循环</button>
+              <button class="btn btn-ghost btn-xs mode-btn" id="mode-btn-random" onclick="WS.send('/music/randommodel/true',{})">随机播放</button>
+              <button class="btn btn-ghost btn-xs" onclick="Admin.toggleGood()">好歌模式</button>
+            </div>
+          </div>
+          <div class="admin-group">
+            <div class="admin-group-label">音量广播</div>
+            <div class="vol-wrap" style="padding:4px 0 0">
+              <span class="vol-label">音量</span>
+              <input type="range" class="vol-slider" id="admin-vol-slider" min="0" max="1" step="0.05" value="1" oninput="Admin.broadcastVol(this.value)">
+              <span id="admin-vol-label" style="font-size:11px;color:var(--text3);min-width:28px">100%</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="auth-wrap">
-        <label>管理员认证</label>
+      <div class="auth-wrap hidden" id="auth-wrap">
+        <label>房主权限</label>
         <div class="auth-row">
-          <input id="auth-in" type="password" placeholder="密码"
-                 onkeydown="if(event.key==='Enter')Auth.admin()">
-          <button class="btn btn-ghost btn-xs" onclick="Auth.admin()">管理</button>
-          <button class="btn btn-ghost btn-xs" onclick="Auth.root()">Root</button>
+          <button class="btn btn-primary btn-xs" id="owner-auth-btn" onclick="Auth.admin()">房主成为管理员</button>
         </div>
+        <div class="auth-note">只有房主可以将自己切换为管理员，避免密码式授权。</div>
       </div>
     </div>
   </div>
@@ -426,6 +642,13 @@ input::placeholder{color:var(--text3)}
     <h2>创建房间</h2>
     <div class="field"><label>房间名称 *</label><input id="cr-name" placeholder="输入房间名"></div>
     <div class="field"><label>房间描述</label><input id="cr-desc" placeholder="可选"></div>
+    <div class="field">
+      <label>房间类型</label>
+      <select id="cr-type">
+        <option value="music">音乐厅 · 一起听</option>
+        <option value="cinema">影院 · 一起看</option>
+      </select>
+    </div>
     <div class="field">
       <label class="check-row">
         <input type="checkbox" id="cr-pwd-on" onchange="document.getElementById('cr-pwd-wrap').classList.toggle('hidden',!this.checked)">
@@ -447,8 +670,7 @@ input::placeholder{color:var(--text3)}
   <div class="modal" style="width:320px">
     <h2>输入房间密码</h2>
     <div class="field">
-      <input id="enter-pwd" type="password" placeholder="请输入密码"
-             onkeydown="if(event.key==='Enter')Lobby.confirmEnter()">
+      <input id="enter-pwd" type="password" placeholder="请输入密码" onkeydown="if(event.key==='Enter')Lobby.confirmEnter()">
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="document.getElementById('modal-pwd').classList.add('hidden')">取消</button>
@@ -462,8 +684,7 @@ input::placeholder{color:var(--text3)}
   <div class="modal" style="width:320px">
     <h2>设置昵称</h2>
     <div class="field">
-      <input id="nick-in" maxlength="20" placeholder="输入昵称"
-             onkeydown="if(event.key==='Enter')UI.saveNick()">
+      <input id="nick-in" maxlength="20" placeholder="输入昵称" onkeydown="if(event.key==='Enter')UI.saveNick()">
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="document.getElementById('modal-nick').classList.add('hidden')">取消</button>
@@ -474,23 +695,25 @@ input::placeholder{color:var(--text3)}
 
 <audio id="aud" preload="auto"></audio>
 
-<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
 <script>
 'use strict';
 
-/* ═══════════════════════════════════════════
-   全局状态
-═══════════════════════════════════════════ */
 var State = {
   sock: null, connected: false, inRoom: false,
   myId: null, myRole: 'default', myName: '',
-  roomId: 'default', queue: [], users: [],
+  roomId: 'default', roomType: 'music', queue: [], users: [],
   music: null, playMode: 'list', goodMode: false,
+  isOwner: false, ownerId: '',
   hideEmpty: false, houses: [], pendingId: null,
   routeSyncing: false, pendingRouteSync: false,
+  avSyncing: false, avState: null, avAutoplayBlocked: false,
+  musicAutoplayBlocked: false,
+  creatingRoom: false, creatingRoomId: '',
+  wsReconnectAttempts: 0,
 };
 
 var aud = document.getElementById('aud');
+var avVideo = document.getElementById('av-video');
 
 var Route = {
   roomId: function() {
@@ -500,9 +723,7 @@ var Route = {
 
   sync: function(roomId, replace) {
     if (State.routeSyncing) return;
-    var url = roomId && roomId !== 'default'
-      ? '/?roomId=' + encodeURIComponent(roomId)
-      : '/';
+    var url = roomId && roomId !== 'default' ? '/?roomId=' + encodeURIComponent(roomId) : '/';
     var state = roomId && roomId !== 'default' ? { roomId: roomId } : { roomId: null };
     if (replace) history.replaceState(state, '', url);
     else history.pushState(state, '', url);
@@ -594,9 +815,19 @@ function toast(msg, ok) {
   setTimeout(function() { el.remove(); }, 2800);
 }
 
-/* ═══════════════════════════════════════════
-   STOMP 帧构造与解析
-═══════════════════════════════════════════ */
+function normalizeRoomType(roomType) {
+  return roomType === 'cinema' ? 'cinema' : 'music';
+}
+
+function roomTypeLabel(roomType) {
+  return normalizeRoomType(roomType) === 'cinema' ? '影院' : '音乐厅';
+}
+
+function createSocketUrl(path) {
+  var scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return scheme + '//' + window.location.host + path;
+}
+
 function stompConnect() {
   return 'CONNECT\naccept-version:1.1,1.2\nheart-beat:0,0\n\n\0';
 }
@@ -619,10 +850,9 @@ function parseFrame(raw) {
   return { type: type, body: body || null };
 }
 
-/* ═══════════════════════════════════════════
-   WebSocket
-═══════════════════════════════════════════ */
 var WS = {
+  _reconnectTimer: null,
+
   init: function(sock, onConnected) {
     State.sock = sock;
     sock.onopen = function() { sock.send(stompConnect()); };
@@ -631,7 +861,8 @@ var WS = {
       if (!frame) return;
       if (frame.type === 'CONNECTED') {
         State.connected = true;
-        // 连接成功后自动设置已保存的昵称
+        State.wsReconnectAttempts = 0;
+        WS._setDot('connected');
         var saved = localStorage.getItem('union_nick');
         if (saved) WS.send('/setting/name', { name: saved });
         if (onConnected) onConnected();
@@ -647,6 +878,26 @@ var WS = {
       State.connected = false;
       State.sock = null;
       if (State.inRoom) {
+        if (e && e.code === 4001) {
+          WS._setDot('disconnected');
+          Render.showLobby(State.routeSyncing);
+          if (State.routeSyncing) State.routeSyncing = false;
+          toast('密码错误或房间不存在', false);
+          Lobby.load();
+          return;
+        }
+        if (State.wsReconnectAttempts < 3) {
+          State.wsReconnectAttempts++;
+          WS._setDot('reconnecting');
+          toast('连接断开，正在重连(' + State.wsReconnectAttempts + '/3)…', false);
+          var delay = Math.min(1000 * Math.pow(2, State.wsReconnectAttempts - 1), 8000);
+          WS._reconnectTimer = setTimeout(function() {
+            if (!State.inRoom) return;
+            WS.enter(State.roomId, '');
+          }, delay);
+          return;
+        }
+        WS._setDot('disconnected');
         Render.showLobby(State.routeSyncing);
         if (State.routeSyncing) State.routeSyncing = false;
         toast('已断开连接', false);
@@ -654,20 +905,30 @@ var WS = {
       } else if (e && e.code === 4001) {
         toast('密码错误或房间不存在', false);
       }
+      WS._setDot('disconnected');
     };
-    sock.onerror = function() { toast('连接失败', false); };
+    sock.onerror = function() { toast('连接失败', false); WS._setDot('disconnected'); };
+  },
+
+  _setDot: function(state) {
+    var dot = $('r-dot');
+    if (!dot) return;
+    dot.className = 'conn-dot ' + state;
   },
 
   enter: function(roomId, pwd) {
     var p = 'roomId=' + encodeURIComponent(roomId || 'default');
     if (pwd) p += '&housePwd=' + encodeURIComponent(pwd);
-    this.init(new SockJS('/server?' + p), null);
+    this.init(new WebSocket(createSocketUrl('/server?' + p)), null);
     State.roomId = roomId || 'default';
+    this._setDot('reconnecting');
   },
 
   create: function(req) {
-    this.init(new SockJS('/server'), function() { WS.send('/house/add', req); });
+    State.creatingRoom = true;
+    this.init(new WebSocket(createSocketUrl('/server')), function() { WS.send('/house/add', req); });
     State.roomId = 'default';
+    this._setDot('reconnecting');
   },
 
   send: function(dest, body) {
@@ -676,36 +937,48 @@ var WS = {
   },
 
   leave: function(skipRoute) {
+    State.wsReconnectAttempts = 99;
+    if (WS._reconnectTimer) { clearTimeout(WS._reconnectTimer); WS._reconnectTimer = null; }
     if (State.sock) { State.sock.close(); State.sock = null; }
+    WS._setDot('disconnected');
     Render.showLobby(skipRoute);
     Lobby.load();
   },
 };
 
-/* ═══════════════════════════════════════════
-   消息处理器
-═══════════════════════════════════════════ */
 var Handlers = {
   SESSION_INFO: function(r) {
     if (r.code !== '20000' || !r.data) return;
     var u = r.data;
-    State.myId   = u.sessionId;
+    State.myId = u.sessionId;
     State.myRole = u.role || 'default';
     State.myName = u.name || '';
     $('my-nick').textContent = u.nickName || u.name || '匿名';
     if (!u.name && !localStorage.getItem('union_nick')) {
       setTimeout(function() { UI.nickModal(); }, 600);
     }
+    UI.updateAccess();
     Render.users(State.users);
   },
 
   ENTER_HOUSE: function(r) {
     if (r.code !== '20000' || !r.data) return;
     var h = r.data;
+    if (State.creatingRoom) {
+      if (!State.creatingRoomId || h.id !== State.creatingRoomId) {
+        return;
+      }
+      State.creatingRoom = false;
+      State.creatingRoomId = '';
+    }
     State.roomId = h.id;
+    State.roomType = normalizeRoomType(h.roomType);
     State.inRoom = true;
+    State.ownerId = h.ownerSessionId || '';
+    State.isOwner = !!State.ownerId && State.ownerId === State.myId;
     $('r-name').textContent = h.name || '公共房间';
     $('r-desc').textContent = h.desc || '';
+    Render.roomType();
     var an = $('announce');
     if (h.announce && h.announce.content) {
       an.textContent = h.announce.content;
@@ -713,6 +986,7 @@ var Handlers = {
     } else {
       an.classList.add('hidden');
     }
+    UI.updateAccess();
     Render.showRoom(State.routeSyncing);
     State.routeSyncing = false;
   },
@@ -768,15 +1042,16 @@ var Handlers = {
 
   NOTICE: function(r) {
     if (!r || !r.message) return;
+    if (State.creatingRoom && r.message === '连接到服务器成功！') {
+      return;
+    }
     toast(r.message, r.code === '20000');
   },
 
   SEARCH: function(r) {
     if (r.code !== '20000') { if (r.message) toast(r.message, false); return; }
     var p = r.data;
-    var list = p == null ? []
-      : Array.isArray(p) ? p
-      : (p.rows || p.list || p.records || p.t || p.data || []);
+    var list = p == null ? [] : Array.isArray(p) ? p : (p.rows || p.list || p.records || p.t || p.data || []);
     Render.search(list);
   },
 
@@ -791,20 +1066,28 @@ var Handlers = {
   },
 
   AUTH_ADMIN: function(r) {
-    if (r.code === '20000') { State.myRole = 'admin'; toast('已成为管理员'); Render.users(State.users); }
-    else toast(r.message || '密码错误', false);
-  },
-  AUTH_ROOT: function(r) {
-    if (r.code === '20000') { State.myRole = 'root'; toast('已成为 Root'); Render.users(State.users); }
+    if (r.code === '20000') { State.myRole = 'admin'; toast('已成为管理员'); UI.updateAccess(); Render.users(State.users); }
     else toast(r.message || '密码错误', false);
   },
 
-  ADD_HOUSE:       function() {},
+  AUTH_ROOT: function(r) {
+    if (r.code === '20000') { State.myRole = 'root'; toast('已成为 Root'); UI.updateAccess(); Render.users(State.users); }
+    else toast(r.message || '密码错误', false);
+  },
+
+  ADD_HOUSE: function(r) {
+    if (r.code === '20000' && r.data) {
+      State.creatingRoomId = r.data;
+      return;
+    }
+    State.creatingRoom = false;
+    State.creatingRoomId = '';
+  },
   ADD_HOUSE_START: function() {},
   ENTER_HOUSE_START: function() {},
 
   CIRCLEMODEL: function() { State.playMode = 'circle'; Render.modeTag(); },
-  LISTMODEL:   function() { State.playMode = 'list';   Render.modeTag(); },
+  LISTMODEL: function() { State.playMode = 'list'; Render.modeTag(); },
   RANDOMMODEL: function() { State.playMode = 'random'; Render.modeTag(); },
 
   GOODMODEL: function(r) {
@@ -818,49 +1101,637 @@ var Handlers = {
     if (!isNaN(v)) aud.volume = Math.max(0, Math.min(1, v));
   },
 
-  AV_PLAYBACK_STATE: function() {},
-  AV_SIGNAL:         function() {},
-  PAUSE:             function() {},
+  AV_PLAYBACK_STATE: function(r) {
+    if (r.code !== '20000') {
+      if (r.message) toast(r.message, false);
+      return;
+    }
+    Cinema.applyState(r.data);
+  },
+  AV_SIGNAL: function() {},
+  PAUSE: function() {},
 };
 
-/* ═══════════════════════════════════════════
-   播放器
-═══════════════════════════════════════════ */
 var Player = {
+  _seekDragging: false,
+
   load: function(m) {
     Lyrics.set(m.lyric || '');
     var offset = m.pushTime ? Math.max(0, (Date.now() - m.pushTime) / 1000) : 0;
+    State.musicAutoplayBlocked = false;
+    $('music-play-btn').textContent = '播放';
+    $('music-play-btn').classList.remove('blocked');
+    $('music-autoplay-banner').classList.add('hidden');
+    $('cover-img').classList.remove('rotating');
+    $('cover-ph').classList.remove('rotating');
     aud.src = m.url;
+    aud.load();
     var play = function() {
       if (offset > 1 && aud.duration && offset < aud.duration - 2) {
         aud.currentTime = offset;
       }
-      aud.play().catch(function() {});
+      aud.play().catch(function(err) {
+        State.musicAutoplayBlocked = true;
+        $('music-play-btn').textContent = '点击播放';
+        $('music-play-btn').classList.add('blocked');
+        $('music-autoplay-banner').classList.remove('hidden');
+      });
     };
     if (aud.readyState >= 1) play();
     else aud.addEventListener('loadedmetadata', play, { once: true });
   },
 
-  seek: function(e) {
+  togglePlay: function() {
+    if (!aud.currentSrc || aud.networkState === 3) return;
+    State.musicAutoplayBlocked = false;
+    $('music-play-btn').classList.remove('blocked');
+    $('music-autoplay-banner').classList.add('hidden');
+    if (aud.paused) {
+      aud.pause();
+      var p = aud.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function(err) {
+          if (err && err.name === 'AbortError') {
+            aud.addEventListener('canplay', function() {
+              aud.play().catch(function() {});
+            }, { once: true });
+            return;
+          }
+          if (err && err.name === 'NotAllowedError') {
+            State.musicAutoplayBlocked = true;
+            $('music-play-btn').textContent = '点击播放';
+            $('music-play-btn').classList.add('blocked');
+            $('music-autoplay-banner').classList.remove('hidden');
+          }
+        });
+      }
+    } else {
+      aud.pause();
+    }
+  },
+
+  seek: function(ratio) {
     if (!aud.duration) return;
-    var r = $('prog-bar').getBoundingClientRect();
-    aud.currentTime = aud.duration * Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    aud.currentTime = aud.duration * Math.max(0, Math.min(1, ratio));
+  },
+
+  seekFromEvent: function(e, bar) {
+    var r = bar.getBoundingClientRect();
+    this.seek((e.clientX - r.left) / r.width);
   },
 };
 
 aud.addEventListener('timeupdate', function() {
   var t = aud.currentTime, d = aud.duration || 0;
   $('t-cur').textContent = fmt(t);
-  $('prog-fill').style.width = d > 0 ? (t / d * 100) + '%' : '0%';
+  if (!Player._seekDragging) {
+    $('prog-fill').style.width = d > 0 ? (t / d * 100) + '%' : '0%';
+  }
   Lyrics.sync(t);
 });
 aud.addEventListener('loadedmetadata', function() {
   $('t-total').textContent = fmt(aud.duration || 0);
 });
+aud.addEventListener('play', function() {
+  $('music-play-btn').textContent = '暂停';
+  $('music-play-btn').classList.remove('blocked');
+  $('music-autoplay-banner').classList.add('hidden');
+  State.musicAutoplayBlocked = false;
+  $('cover-img').classList.add('rotating');
+  $('cover-ph').classList.add('rotating');
+});
+aud.addEventListener('pause', function() {
+  $('music-play-btn').textContent = '播放';
+  $('cover-img').classList.remove('rotating');
+  $('cover-ph').classList.remove('rotating');
+});
+aud.addEventListener('volumechange', function() {
+  var slider = $('vol-slider');
+  if (slider) slider.value = aud.volume;
+});
 
-/* ═══════════════════════════════════════════
-   歌词解析与同步
-═══════════════════════════════════════════ */
+/* 进度条拖拽 — 音乐厅 */
+(function() {
+  var bar = null;
+  function onDown(e) {
+    bar = $('prog-bar');
+    Player._seekDragging = true;
+    bar.classList.add('dragging');
+    onMove(e);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchend', onUp);
+  }
+  function onMove(e) {
+    if (!bar) return;
+    var r = bar.getBoundingClientRect();
+    var cx = e.touches ? e.touches[0].clientX : e.clientX;
+    var ratio = Math.max(0, Math.min(1, (cx - r.left) / r.width));
+    $('prog-fill').style.width = (ratio * 100) + '%';
+    if (e.type === 'touchmove') e.preventDefault();
+  }
+  function onUp(e) {
+    if (!bar) return;
+    var r = bar.getBoundingClientRect();
+    var cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    var ratio = Math.max(0, Math.min(1, (cx - r.left) / r.width));
+    Player.seek(ratio);
+    Player._seekDragging = false;
+    bar.classList.remove('dragging');
+    bar = null;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchend', onUp);
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var progBar = $('prog-bar');
+    if (progBar) {
+      progBar.addEventListener('mousedown', onDown);
+      progBar.addEventListener('touchstart', onDown, { passive: true });
+      progBar.addEventListener('click', function(e) {
+        if (!Player._seekDragging) Player.seekFromEvent(e, progBar);
+      });
+    }
+    /* 音量滑块 init */
+    var vs = $('vol-slider');
+    if (vs) vs.addEventListener('input', function() { aud.volume = parseFloat(this.value); });
+  });
+})();
+
+var Cinema = {
+  currentSourceUrl: '',
+  hls: null,
+  syncTimer: null,
+
+  applyUrl: function() {
+    var url = $('av-url').value.trim();
+    if (!url) {
+      toast('请输入视频地址', false);
+      return;
+    }
+    var title = $('av-url-title').value.trim() || this.titleFromUrl(url);
+    this.resolveSource(url, title).then(function(result) {
+      Cinema.pushState({
+        mediaType: 'video',
+        sourceType: result.sourceType || Cinema.guessSourceType(result.originUrl || url),
+        originUrl: result.originUrl || url,
+        mediaUrl: result.mediaUrl || url,
+        mediaId: result.mediaId || '',
+        title: result.title || title,
+        posterUrl: result.posterUrl || '',
+        positionMs: 0,
+        playbackRate: parseFloat($('av-rate').value) || 1,
+        volume: avVideo.volume,
+        playing: false,
+        updatedAt: Date.now(),
+        resolvedAt: result.resolvedAt || Date.now(),
+      });
+    }).catch(function(err) {
+      toast((err && err.message) ? err.message : '视频解析失败', false);
+    });
+  },
+
+  upload: function() {
+    var fileInput = $('av-file');
+    var file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    var form = new FormData();
+    form.append('file', file);
+    var xhr = new XMLHttpRequest();
+    var status = $('av-upload-status');
+    status.textContent = '正在上传: ' + file.name;
+    xhr.open('POST', '/av/media/upload', true);
+    xhr.upload.onprogress = function(e) {
+      if (!e.lengthComputable) return;
+      var percent = Math.round(e.loaded / e.total * 100);
+      status.textContent = '正在上传: ' + file.name + ' ' + percent + '%';
+    };
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status < 200 || xhr.status >= 300) {
+        status.textContent = '上传失败';
+        toast('上传失败', false);
+        return;
+      }
+      var d;
+      try { d = JSON.parse(xhr.responseText || '{}'); } catch (e) { d = {}; }
+      if (d.code !== '20000' || !d.data) {
+        status.textContent = '上传失败';
+        toast(d.message || '上传失败', false);
+        return;
+      }
+      toast('视频上传成功');
+      status.textContent = '上传完成: ' + (d.data.name || file.name || '上传视频');
+      Cinema.pushState({
+        mediaType: 'video',
+        sourceType: 'upload',
+        originUrl: d.data.url,
+        mediaUrl: d.data.url,
+        mediaId: d.data.url,
+        title: d.data.name || file.name || '上传视频',
+        positionMs: 0,
+        playbackRate: parseFloat($('av-rate').value) || 1,
+        volume: avVideo.volume,
+        playing: false,
+        updatedAt: Date.now(),
+        resolvedAt: Date.now(),
+      });
+      fileInput.value = '';
+    };
+    xhr.onerror = function() {
+      status.textContent = '上传失败';
+      toast('上传失败', false);
+    };
+    xhr.send(form);
+  },
+
+  resolveSource: function(url, title) {
+    return fetch('/av/media/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url, title: title }),
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      if (d.code !== '20000' || !d.data) {
+        throw new Error(d.message || '视频解析失败');
+      }
+      return d.data;
+    });
+  },
+
+  pushState: function(state) {
+    WS.send('/av/playback/state', state);
+  },
+
+  reset: function() {
+    avVideo.pause();
+    avVideo.removeAttribute('src');
+    avVideo.load();
+    this.currentSourceUrl = '';
+    this.stopHls();
+    State.avState = null;
+    State.avSyncing = false;
+    State.avAutoplayBlocked = false;
+    if (this.syncTimer) {
+      clearInterval(this.syncTimer);
+      this.syncTimer = null;
+    }
+    var loadingEl = $('av-loading');
+    if (loadingEl) loadingEl.classList.add('hidden');
+    var overlay = $('cinema-chat-overlay');
+    if (overlay) overlay.innerHTML = '';
+  },
+
+  stopHls: function() {
+    if (this.hls) {
+      this.hls.destroy();
+      this.hls = null;
+    }
+  },
+
+  isHlsUrl: function(url) {
+    return /\.m3u8($|\?)/i.test(url || '');
+  },
+
+  attachSource: function(url) {
+    this.stopHls();
+    avVideo.removeAttribute('src');
+    if (this.isHlsUrl(url)) {
+      if (window.Hls && Hls.isSupported()) {
+        this.hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false
+        });
+        this.hls.attachMedia(avVideo);
+        this.hls.loadSource(url);
+        this.currentSourceUrl = url;
+        return;
+      }
+      if (avVideo.canPlayType && avVideo.canPlayType('application/vnd.apple.mpegurl')) {
+        avVideo.src = url;
+        this.currentSourceUrl = url;
+        return;
+      }
+      throw new Error('当前浏览器缺少 HLS 播放支持，请使用 mp4 直链或支持 HLS 的浏览器');
+    }
+    avVideo.src = url;
+    this.currentSourceUrl = url;
+  },
+
+  isUsingHlsJs: function() {
+    return !!this.hls;
+  },
+
+  applyState: function(state) {
+    var prev = State.avState;
+    State.avState = state || null;
+    if (!state || !state.mediaUrl) {
+      avVideo.pause();
+      this.stopHls();
+      this.currentSourceUrl = '';
+      State.avAutoplayBlocked = false;
+      avVideo.removeAttribute('src');
+      avVideo.load();
+      $('av-video').classList.add('hidden');
+      $('av-empty').classList.remove('hidden');
+      $('av-loading').classList.add('hidden');
+      $('av-title').textContent = '一起看';
+      $('av-sub').textContent = '影院房支持本地上传、视频直链和哔哩哔哩同步播放';
+      $('av-status').textContent = '未开始';
+      $('av-play-btn').textContent = '播放';
+      $('av-play-btn').classList.remove('av-blocked');
+      $('av-prog-fill').style.width = '0%';
+      $('av-t-cur').textContent = '0:00';
+      $('av-t-total').textContent = '0:00';
+      $('av-upload-status').textContent = '影院房会同步视频地址、播放 / 暂停、进度、倍速和音量。音乐厅房仍然保持现有一起听能力。';
+      return;
+    }
+
+    State.avSyncing = true;
+    State.avAutoplayBlocked = false;
+    $('av-play-btn').classList.remove('av-blocked');
+    $('av-empty').classList.add('hidden');
+    $('av-video').classList.remove('hidden');
+    $('av-title').textContent = state.title || this.titleFromUrl(state.originUrl || state.mediaUrl);
+    $('av-sub').textContent = this.describeSource(state);
+    $('av-status').textContent = state.playing ? '播放中' : '已暂停';
+    $('av-play-btn').textContent = state.playing ? '暂停' : '播放';
+    $('av-rate').value = String(state.playbackRate || 1);
+    $('av-upload-status').textContent = this.describeSource(state);
+
+    var resume = function() {
+      if (typeof state.playbackRate === 'number') avVideo.playbackRate = state.playbackRate;
+      if (typeof state.volume === 'number') avVideo.volume = Math.max(0, Math.min(1, state.volume));
+      var position = Cinema.expectedPosition(state);
+      if (typeof position === 'number' && !isNaN(position)) {
+        var diff = Math.abs((avVideo.currentTime || 0) - position);
+        if (diff > 3) {
+          try { avVideo.currentTime = Math.max(0, position); } catch (e) {}
+        }
+      }
+      if (state.playing) {
+        if (avVideo.paused) {
+          avVideo.play().catch(function() {
+            State.avAutoplayBlocked = true;
+            $('av-play-btn').textContent = '点击播放';
+            $('av-play-btn').classList.add('av-blocked');
+          });
+        }
+      } else {
+        if (!avVideo.paused) avVideo.pause();
+      }
+      State.avSyncing = false;
+      $('av-loading').classList.add('hidden');
+    };
+
+    if (this.currentSourceUrl !== state.mediaUrl) {
+      $('av-loading').classList.remove('hidden');
+      try {
+        this.attachSource(state.mediaUrl);
+      } catch (e) {
+        this.currentSourceUrl = '';
+        State.avSyncing = false;
+        $('av-loading').classList.add('hidden');
+        toast(e.message || '视频加载失败', false);
+        return;
+      }
+      if (this.isHlsUrl(state.mediaUrl) && this.isUsingHlsJs()) {
+        var hls = this.hls;
+        var onParsed = function() {
+          hls.off(Hls.Events.MANIFEST_PARSED, onParsed);
+          $('av-t-total').textContent = fmt(avVideo.duration || 0);
+          resume();
+        };
+        hls.on(Hls.Events.MANIFEST_PARSED, onParsed);
+      } else {
+        avVideo.onloadedmetadata = function() {
+          avVideo.onloadedmetadata = null;
+          $('av-t-total').textContent = fmt(avVideo.duration || 0);
+          resume();
+        };
+      }
+      this.ensureSyncLoop();
+      return;
+    }
+
+    resume();
+    this.ensureSyncLoop();
+  },
+
+  ensureSyncLoop: function() {
+    if (this.syncTimer) return;
+    this.syncTimer = setInterval(function() {
+      if (State.roomType !== 'cinema' || State.avSyncing || State.avAutoplayBlocked || !State.avState || !State.avState.mediaUrl) return;
+      var state = State.avState;
+      if (!state.playing) {
+        if (!avVideo.paused) avVideo.pause();
+        return;
+      }
+      var expected = Cinema.expectedPosition(state);
+      if (typeof expected === 'number' && !isNaN(expected)) {
+        var diff = Math.abs((avVideo.currentTime || 0) - expected);
+        if (diff > 5) {
+          try { avVideo.currentTime = Math.max(0, expected); } catch (e) {}
+        }
+      }
+      if (avVideo.paused) {
+        avVideo.play().catch(function() {
+          State.avAutoplayBlocked = true;
+          $('av-play-btn').textContent = '点击播放';
+          $('av-play-btn').classList.add('av-blocked');
+        });
+      }
+    }, 2500);
+  },
+
+  expectedPosition: function(state) {
+    if (!state || typeof state.positionMs !== 'number') return 0;
+    var pos = state.positionMs / 1000;
+    if (state.playing && state.updatedAt) {
+      pos += Math.max(0, (Date.now() - state.updatedAt) / 1000);
+    }
+    return pos;
+  },
+
+  seek: function(e) {
+    if (!avVideo.duration) return;
+    var r = $('av-prog-bar').getBoundingClientRect();
+    avVideo.currentTime = avVideo.duration * Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    this.syncFromVideo(false);
+  },
+
+  togglePlay: function() {
+    if (!State.avState || !State.avState.mediaUrl) {
+      toast('请先上传视频或输入视频地址', false);
+      return;
+    }
+    State.avAutoplayBlocked = false;
+    $('av-play-btn').classList.remove('av-blocked');
+    if (avVideo.paused) {
+      avVideo.play().then(function() {
+        Cinema.syncFromVideo(true);
+      }).catch(function() {
+        State.avAutoplayBlocked = true;
+        $('av-play-btn').textContent = '点击播放';
+        $('av-play-btn').classList.add('av-blocked');
+      });
+    } else {
+      avVideo.pause();
+      Cinema.syncFromVideo(false);
+    }
+  },
+
+  changeRate: function() {
+    avVideo.playbackRate = parseFloat($('av-rate').value) || 1;
+    this.syncFromVideo(false);
+  },
+
+  syncFromVideo: function(forcePlayingState) {
+    if (State.avSyncing || State.roomType !== 'cinema') return;
+    var self = this;
+    if (self._syncDebounce) clearTimeout(self._syncDebounce);
+    self._syncDebounce = setTimeout(function() {
+      self._syncDebounce = null;
+      self.pushState({
+        mediaType: 'video',
+        sourceType: (State.avState && State.avState.sourceType) || self.guessSourceType(Cinema.currentSourceUrl || avVideo.currentSrc || avVideo.src),
+        originUrl: (State.avState && State.avState.originUrl) || Cinema.currentSourceUrl || avVideo.currentSrc || avVideo.src,
+        mediaUrl: Cinema.currentSourceUrl || avVideo.currentSrc || avVideo.src,
+        mediaId: (State.avState && State.avState.mediaId) || '',
+        title: $('av-title').textContent || self.titleFromUrl(Cinema.currentSourceUrl || avVideo.currentSrc || avVideo.src),
+        positionMs: Math.round((avVideo.currentTime || 0) * 1000),
+        playbackRate: avVideo.playbackRate || 1,
+        volume: avVideo.volume,
+        playing: !avVideo.paused,
+        updatedAt: Date.now(),
+        resolvedAt: (State.avState && State.avState.resolvedAt) || Date.now(),
+      });
+    }, 500);
+  },
+
+  describeSource: function(state) {
+    if (!state) return '影院房支持本地上传、视频直链和哔哩哔哩同步播放';
+    var sourceType = (state.sourceType || this.guessSourceType(state.originUrl || state.mediaUrl || '')).toLowerCase();
+    if (sourceType === 'upload') {
+      return '本地文件 · ' + (state.title || this.titleFromUrl(state.originUrl || state.mediaUrl));
+    }
+    if (sourceType === 'bilibili') {
+      return '哔哩哔哩 · ' + (state.originUrl || state.mediaUrl);
+    }
+    if (sourceType === 'stream') {
+      return '在线视频流 · ' + (state.originUrl || state.mediaUrl);
+    }
+    return '视频直链 · ' + (state.originUrl || state.mediaUrl);
+  },
+
+  guessSourceType: function(url) {
+    var current = (url || '').toLowerCase();
+    if (current.indexOf('bilibili.com') >= 0 || current.indexOf('b23.tv') >= 0 || current.indexOf('bili2233.cn') >= 0) {
+      return 'bilibili';
+    }
+    if (/\.m3u8($|\?)/i.test(current)) return 'stream';
+    if (current.indexOf('/av/media/files/') >= 0) return 'upload';
+    return 'direct';
+  },
+
+  titleFromUrl: function(url) {
+    if (!url) return '在线视频';
+    var plain = url.split('?')[0];
+    var pieces = plain.split('/');
+    return decodeURIComponent(pieces[pieces.length - 1] || '在线视频');
+  },
+};
+
+avVideo.addEventListener('timeupdate', function() {
+  var t = avVideo.currentTime || 0;
+  var d = avVideo.duration || 0;
+  $('av-t-cur').textContent = fmt(t);
+  $('av-t-total').textContent = fmt(d);
+  if (!Cinema._avSeekDragging) {
+    $('av-prog-fill').style.width = d > 0 ? (t / d * 100) + '%' : '0%';
+  }
+});
+avVideo.addEventListener('loadedmetadata', function() {
+  $('av-loading').classList.add('hidden');
+});
+avVideo.addEventListener('canplay', function() {
+  $('av-loading').classList.add('hidden');
+});
+avVideo.addEventListener('waiting', function() {
+  if (State.avState && State.avState.mediaUrl) $('av-loading').classList.remove('hidden');
+});
+avVideo.addEventListener('play', function() {
+  $('av-play-btn').textContent = '暂停';
+  $('av-play-btn').classList.remove('av-blocked');
+  $('av-status').textContent = '播放中';
+  State.avAutoplayBlocked = false;
+  if (!State.avSyncing) Cinema.syncFromVideo(true);
+});
+avVideo.addEventListener('pause', function() {
+  $('av-play-btn').textContent = '播放';
+  $('av-status').textContent = '已暂停';
+  if (!State.avSyncing) Cinema.syncFromVideo(false);
+});
+avVideo.addEventListener('ratechange', function() {
+  if (!State.avSyncing) Cinema.syncFromVideo(false);
+});
+avVideo.addEventListener('volumechange', function() {
+  if (!State.avSyncing) Cinema.syncFromVideo(false);
+});
+avVideo.addEventListener('seeked', function() {
+  if (!State.avSyncing) Cinema.syncFromVideo(false);
+});
+
+/* 影院进度条拖拽 */
+(function() {
+  var bar = null;
+  Cinema._avSeekDragging = false;
+  function onDown(e) {
+    bar = $('av-prog-bar');
+    Cinema._avSeekDragging = true;
+    bar.classList.add('dragging');
+    onMove(e);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchend', onUp);
+  }
+  function onMove(e) {
+    if (!bar) return;
+    var r = bar.getBoundingClientRect();
+    var cx = e.touches ? e.touches[0].clientX : e.clientX;
+    var ratio = Math.max(0, Math.min(1, (cx - r.left) / r.width));
+    $('av-prog-fill').style.width = (ratio * 100) + '%';
+    if (e.type === 'touchmove') e.preventDefault();
+  }
+  function onUp(e) {
+    if (!bar) return;
+    var r = bar.getBoundingClientRect();
+    var cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    var ratio = Math.max(0, Math.min(1, (cx - r.left) / r.width));
+    if (avVideo.duration) avVideo.currentTime = avVideo.duration * ratio;
+    Cinema._avSeekDragging = false;
+    bar.classList.remove('dragging');
+    bar = null;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchend', onUp);
+    Cinema.syncFromVideo(false);
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var avBar = $('av-prog-bar');
+    if (avBar) {
+      avBar.addEventListener('mousedown', onDown);
+      avBar.addEventListener('touchstart', onDown, { passive: true });
+      avBar.addEventListener('click', function(e) {
+        if (!Cinema._avSeekDragging) Cinema.seek(e);
+      });
+    }
+  });
+})();
+
 var Lyrics = {
   lines: [],
   lastIdx: -1,
@@ -905,24 +1776,30 @@ var Lyrics = {
   },
 };
 
-/* ═══════════════════════════════════════════
-   渲染
-═══════════════════════════════════════════ */
 var Render = {
   showLobby: function(skipRoute) {
     $('room').classList.add('hidden');
     $('lobby').classList.remove('hidden');
+    Cinema.reset();
     State.inRoom = false;
-    State.myId   = null;
+    State.myId = null;
     State.myRole = 'default';
-    State.users  = [];
-    State.queue  = [];
-    State.music  = null;
+    State.isOwner = false;
+    State.users = [];
+    State.queue = [];
+    State.music = null;
     State.roomId = 'default';
+    State.roomType = 'music';
+    State.avState = null;
+    State.ownerId = '';
+    State.creatingRoom = false;
+    State.creatingRoomId = '';
     aud.pause(); aud.src = '';
-    $('msgs').innerHTML   = '';
+    $('msgs').innerHTML = '';
     $('q-list').innerHTML = '';
     $('s-panel').classList.add('hidden');
+    Render.roomType();
+    UI.updateAccess();
     document.title = 'UNION';
     if (!skipRoute) Route.sync(null, false);
   },
@@ -930,8 +1807,22 @@ var Render = {
   showRoom: function(skipRoute) {
     $('lobby').classList.add('hidden');
     $('room').classList.remove('hidden');
+    Render.roomType();
+    UI.updateAccess();
     document.title = $('r-name').textContent + ' - UNION';
     if (!skipRoute) Route.sync(State.roomId, false);
+  },
+
+  roomType: function() {
+    var roomType = normalizeRoomType(State.roomType);
+    $('r-type').textContent = roomTypeLabel(roomType);
+    $('r-type').className = 'topbar-type ' + roomType;
+    $('room-body').classList.toggle('cinema', roomType === 'cinema');
+    $('music-player-col').classList.toggle('hidden', roomType !== 'music');
+    $('music-queue-col').classList.toggle('hidden', roomType !== 'music');
+    $('cinema-col').classList.toggle('hidden', roomType !== 'cinema');
+    $('cinema-side').classList.toggle('hidden', roomType !== 'cinema');
+    UI.updateAccess();
   },
 
   rooms: function(houses) {
@@ -947,12 +1838,15 @@ var Render = {
       return;
     }
     grid.innerHTML = list.map(function(h) {
+      var roomType = normalizeRoomType(h.roomType);
+      var roomTag = roomType === 'cinema'
+        ? ' <span class="tag tag-cinema">影院</span>'
+        : ' <span class="tag tag-music">音乐厅</span>';
+      var publicTag = h.id === 'default' ? ' <span class="tag">公共</span>' : '';
       return '<div class="room-card" onclick="Lobby.enter(\'' + esc(h.id) + '\',\'' + esc(h.name) + '\',' + (!!h.needPwd) + ')">' +
         '<div class="rc-head">' +
           '<div class="rc-name-wrap">' +
-            '<div class="rc-name">' + (h.needPwd ? '&#128274; ' : '') + esc(h.name) +
-              (h.id === 'default' ? ' <span class="tag">公共</span>' : '') +
-            '</div>' +
+            '<div class="rc-name">' + (h.needPwd ? '&#128274; ' : '') + esc(h.name) + publicTag + roomTag + '</div>' +
           '</div>' +
         '</div>' +
         '<div class="rc-desc">' + esc(h.desc || '') + '</div>' +
@@ -966,20 +1860,21 @@ var Render = {
 
   player: function(m) {
     if (!m) {
-      $('m-title').textContent  = '暂无播放';
+      $('m-title').textContent = '暂无播放';
       $('m-artist').textContent = '';
       $('m-picker').textContent = '';
       $('cover-img').classList.add('hidden');
       $('cover-ph').classList.remove('hidden');
       $('prog-fill').style.width = '0%';
-      $('t-cur').textContent  = '0:00';
+      $('t-cur').textContent = '0:00';
       $('t-total').textContent = '0:00';
+      $('music-play-btn').textContent = '播放';
       return;
     }
-    $('m-title').textContent  = m.name   || '未知歌曲';
+    $('m-title').textContent = m.name || '未知歌曲';
     $('m-artist').textContent = m.artist || '';
     $('m-picker').textContent = m.nickName ? '点歌: ' + m.nickName : '';
-    $('t-total').textContent  = fmt((m.duration || 0) / 1000);
+    $('t-total').textContent = fmt((m.duration || 0) / 1000);
     var img = $('cover-img');
     if (m.pictureUrl) {
       img.src = m.pictureUrl;
@@ -1011,7 +1906,7 @@ var Render = {
         '</div>' +
         '<div class="song-acts">' +
           (State.goodMode ? '<button class="ico-btn" onclick="WS.send(\'/music/good/' + esc(s.id) + '\',null)" title="点赞">&#128077;</button>' : '') +
-          (admin ? '<button class="ico-btn" onclick="Queue.top(\'' + esc(s.id) + '\',\'' + esc(s.name||'') + '\')" title="置顶">&#11014;</button>' : '') +
+          (admin ? '<button class="ico-btn" onclick="Queue.top(\'' + esc(s.id) + '\',\'' + esc(s.name || '') + '\')" title="置顶">&#11014;</button>' : '') +
           ((admin || mine) ? '<button class="ico-btn del" onclick="WS.send(\'/music/delete\',{id:\'' + esc(s.id) + '\'})" title="删除">&#10005;</button>' : '') +
         '</div></div>';
     }).join('');
@@ -1025,9 +1920,9 @@ var Render = {
       return;
     }
     panel.innerHTML = list.map(function(s) {
-      return '<div class="sr-row" onclick="Queue.pick(\'' + esc(s.id) + '\',\'' + esc(s.name||'') + '\')">' +
+      return '<div class="sr-row" onclick="Queue.pick(\'' + esc(s.id) + '\',\'' + esc(s.name || '') + '\')">' +
         '<span class="sr-add">+</span>' +
-        (s.cover || s.pictureUrl ? '<img style="width:32px;height:32px;border-radius:6px;object-fit:cover" src="' + esc(s.cover||s.pictureUrl) + '" loading="lazy" alt="">' : '') +
+        (s.cover || s.pictureUrl ? '<img style="width:32px;height:32px;border-radius:6px;object-fit:cover" src="' + esc(s.cover || s.pictureUrl) + '" loading="lazy" alt="">' : '') +
         '<div class="song-info">' +
           '<div class="song-name">' + esc(s.name || '') + '</div>' +
           '<div class="song-meta2">' + esc(s.artists || s.artist || '') + '</div>' +
@@ -1037,25 +1932,36 @@ var Render = {
   },
 
   users: function(list) {
+    var isAdmin = State.myRole === 'admin' || State.myRole === 'root';
     $('users').innerHTML = list.map(function(u) {
       var cls = 'u-chip';
-      if (u.role === 'root')  cls += ' root';
+      if (u.sessionId === State.ownerId) cls += ' owner';
+      if (u.role === 'root') cls += ' root';
       else if (u.role === 'admin') cls += ' admin';
       if (u.sessionId === State.myId) cls += ' me';
-      var label = (u.nickName || u.name || '匿名') + (u.sessionId === State.myId ? '(我)' : '');
-      return '<span class="' + cls + '">' + esc(label) + '</span>';
+      var label = (u.nickName || u.name || '匿名');
+      if (u.sessionId === State.ownerId) label = '房主 · ' + label;
+      if (u.sessionId === State.myId) label += '(我)';
+      var clickable = isAdmin && u.sessionId !== State.myId;
+      if (clickable) cls += ' clickable';
+      var attr = clickable
+        ? ' onclick="UserMenu.show(event,\'' + esc(u.sessionId) + '\',\'' + esc(u.nickName || u.name || '匿名') + '\')"'
+        : '';
+      return '<span class="' + cls + '"' + attr + '>' + esc(label) + '</span>';
     }).join('');
+    UI.updateAccess();
   },
 
   modeTag: function() {
     var map = { list: '顺序播放', circle: '单曲循环', random: '随机播放' };
     $('mode-tag').textContent = map[State.playMode] || '顺序播放';
+    ['list', 'circle', 'random'].forEach(function(m) {
+      var btn = $('mode-btn-' + m);
+      if (btn) btn.classList.toggle('active', State.playMode === m);
+    });
   },
 };
 
-/* ═══════════════════════════════════════════
-   大厅
-═══════════════════════════════════════════ */
 var Lobby = {
   load: function() {
     fetch('/house/search', {
@@ -1094,17 +2000,20 @@ var Lobby = {
   create: function() {
     var name = $('cr-name').value.trim();
     if (!name) { toast('请输入房间名称', false); return; }
-    var needPwd  = $('cr-pwd-on').checked;
+    var needPwd = $('cr-pwd-on').checked;
     var password = $('cr-pwd').value;
     if (needPwd && !password) { toast('请输入密码', false); return; }
     $('modal-create').classList.add('hidden');
-    WS.create({ name: name, desc: $('cr-desc').value.trim(), needPwd: needPwd, password: needPwd ? password : '' });
+    WS.create({
+      name: name,
+      desc: $('cr-desc').value.trim(),
+      roomType: $('cr-type').value,
+      needPwd: needPwd,
+      password: needPwd ? password : ''
+    });
   },
 };
 
-/* ═══════════════════════════════════════════
-   队列操作
-═══════════════════════════════════════════ */
 var Queue = {
   search: function() {
     var q = $('s-input').value.trim();
@@ -1119,24 +2028,110 @@ var Queue = {
     toast('已添加到队列');
   },
 
+  uploadLocal: function() {
+    var fileInput = $('music-local-file');
+    var file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    var wrap = $('music-upload-progress-wrap');
+    var fill = $('music-upload-fill');
+    var text = $('music-upload-text');
+    wrap.classList.remove('hidden');
+    fill.style.width = '0%';
+    text.textContent = '正在上传: ' + file.name;
+    var form = new FormData();
+    form.append('file', file);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/av/media/upload', true);
+    xhr.upload.onprogress = function(e) {
+      if (!e.lengthComputable) return;
+      var pct = Math.round(e.loaded / e.total * 100);
+      fill.style.width = pct + '%';
+      text.textContent = '正在上传: ' + file.name + ' ' + pct + '%';
+    };
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status < 200 || xhr.status >= 300) {
+        text.textContent = '上传失败';
+        fill.style.width = '0%';
+        toast('上传失败', false);
+        return;
+      }
+      var d;
+      try { d = JSON.parse(xhr.responseText || '{}'); } catch (e) { d = {}; }
+      if (d.code !== '20000' || !d.data) {
+        text.textContent = '上传失败: ' + (d.message || '');
+        fill.style.width = '0%';
+        toast(d.message || '上传失败', false);
+        return;
+      }
+      fill.style.width = '100%';
+      text.textContent = '上传完成';
+      Queue.probeDuration(d.data.url, file.type).then(function(duration) {
+        WS.send('/music/pick', {
+          id: d.data.url,
+          name: d.data.name || file.name || '本地音频',
+          source: 'local',
+          duration: duration
+        });
+        fileInput.value = '';
+        toast((file.type || '').indexOf('video/') === 0 ? '本地媒体已加入队列' : '本地音频已加入队列');
+        setTimeout(function() { wrap.classList.add('hidden'); fill.style.width = '0%'; }, 2000);
+      });
+    };
+    xhr.onerror = function() {
+      text.textContent = '上传失败';
+      fill.style.width = '0%';
+      toast('上传失败', false);
+    };
+    xhr.send(form);
+  },
+
+  probeDuration: function(url, mimeType) {
+    return new Promise(function(resolve) {
+      var tag = (mimeType || '').indexOf('video/') === 0 ? 'video' : 'audio';
+      var media = document.createElement(tag);
+      var done = false;
+      var finish = function(value) {
+        if (done) return;
+        done = true;
+        try {
+          media.removeAttribute('src');
+          media.load();
+        } catch (e) {}
+        resolve(value);
+      };
+      media.preload = 'metadata';
+      media.onloadedmetadata = function() {
+        var duration = media.duration;
+        if (typeof duration === 'number' && isFinite(duration) && duration > 0) {
+          finish(Math.round(duration * 1000));
+        } else {
+          finish(0);
+        }
+      };
+      media.onerror = function() {
+        finish(0);
+      };
+      media.src = url;
+      media.load();
+      setTimeout(function() {
+        finish(0);
+      }, 8000);
+    });
+  },
+
   top: function(id, name) {
     WS.send('/music/top', { id: id, name: name });
   },
 };
 
-// 点击搜索面板外部关闭
 document.addEventListener('click', function(e) {
   var panel = $('s-panel');
-  if (!panel.classList.contains('hidden') &&
-      !panel.contains(e.target) &&
-      e.target !== $('s-input')) {
+  if (!panel.classList.contains('hidden') && !panel.contains(e.target) && e.target !== $('s-input')) {
     panel.classList.add('hidden');
   }
 });
 
-/* ═══════════════════════════════════════════
-   聊天
-═══════════════════════════════════════════ */
 var Chat = {
   send: function() {
     var content = $('c-input').value.trim();
@@ -1156,15 +2151,25 @@ var Chat = {
     div.className = 'msg';
     div.innerHTML = '<span class="msg-nick ' + role + '">' + esc(nick || '匿名') + '</span>: <span class="msg-txt">' + esc(text) + '</span>';
     msgs.appendChild(div);
-    // 保留最多200条消息
     while (msgs.children.length > 200) msgs.removeChild(msgs.firstChild);
     msgs.scrollTop = msgs.scrollHeight;
+
+    if (State.roomType === 'cinema') {
+      var overlay = $('cinema-chat-overlay');
+      if (overlay) {
+        var bubble = document.createElement('div');
+        bubble.className = 'cinema-chat-msg';
+        bubble.textContent = (nick || '匿名') + ': ' + text;
+        overlay.appendChild(bubble);
+        while (overlay.children.length > 5) overlay.removeChild(overlay.firstChild);
+        setTimeout(function() {
+          if (bubble.parentNode === overlay) overlay.removeChild(bubble);
+        }, 3000);
+      }
+    }
   },
 };
 
-/* ═══════════════════════════════════════════
-   管理与认证
-═══════════════════════════════════════════ */
 var Admin = {
   clear: function() {
     if (confirm('确定清空播放队列?')) WS.send('/music/clear', {});
@@ -1172,26 +2177,68 @@ var Admin = {
   toggleGood: function() {
     WS.send('/music/goodmodel/' + (!State.goodMode), {});
   },
+  broadcastVol: function(val) {
+    var v = Math.max(0, Math.min(1, parseFloat(val) || 0));
+    WS.send('/music/volumn/' + v, {});
+  },
+};
+
+var UserMenu = {
+  _menu: null,
+  _closeListener: null,
+
+  show: function(e, sessionId, nick) {
+    this.close();
+    var menu = document.createElement('div');
+    menu.className = 'u-menu';
+    menu.style.top = (e.clientY + 4) + 'px';
+    menu.style.left = (e.clientX + 4) + 'px';
+
+    var items = [
+      { label: '踢出并拉黑', cls: 'danger', action: function() { UserMenu._ban(sessionId, nick); } },
+    ];
+    items.forEach(function(item) {
+      var el = document.createElement('div');
+      el.className = 'u-menu-item ' + (item.cls || '');
+      el.textContent = item.label;
+      el.addEventListener('click', function() { item.action(); UserMenu.close(); });
+      menu.appendChild(el);
+    });
+
+    document.body.appendChild(menu);
+    this._menu = menu;
+    var self = this;
+    this._closeListener = function(ev) {
+      if (!menu.contains(ev.target)) self.close();
+    };
+    setTimeout(function() {
+      document.addEventListener('click', self._closeListener);
+      document.addEventListener('contextmenu', self._closeListener);
+    }, 0);
+  },
+
+  close: function() {
+    if (this._menu && this._menu.parentNode) this._menu.parentNode.removeChild(this._menu);
+    this._menu = null;
+    if (this._closeListener) {
+      document.removeEventListener('click', this._closeListener);
+      document.removeEventListener('contextmenu', this._closeListener);
+      this._closeListener = null;
+    }
+  },
+
+  _ban: function(sessionId, nick) {
+    if (!confirm('确定将 ' + nick + ' 踢出并加入黑名单?')) return;
+    WS.send('/chat/black', { sessionId: sessionId });
+  },
 };
 
 var Auth = {
   admin: function() {
-    var pwd = $('auth-in').value;
-    if (!pwd) return;
-    WS.send('/auth/admin', { password: pwd });
-    $('auth-in').value = '';
-  },
-  root: function() {
-    var pwd = $('auth-in').value;
-    if (!pwd) return;
-    WS.send('/auth/root', { password: pwd });
-    $('auth-in').value = '';
+    WS.send('/auth/admin', {});
   },
 };
 
-/* ═══════════════════════════════════════════
-   UI 交互
-═══════════════════════════════════════════ */
 var UI = {
   filterRooms: function() { Render.rooms(State.houses); },
 
@@ -1204,6 +2251,7 @@ var UI = {
   createModal: function() {
     $('cr-name').value = '';
     $('cr-desc').value = '';
+    $('cr-type').value = 'music';
     $('cr-pwd-on').checked = false;
     $('cr-pwd').value = '';
     $('cr-pwd-wrap').classList.add('hidden');
@@ -1233,11 +2281,25 @@ var UI = {
     btns.classList.toggle('hidden');
     $('admin-arrow').innerHTML = wasHidden ? '&#9660;' : '&#9654;';
   },
+
+  updateAccess: function() {
+    var isAdmin = State.myRole === 'admin' || State.myRole === 'root';
+    var ownerAuth = $('owner-auth-btn');
+    var ownerWrap = $('auth-wrap');
+    $('admin-btns').classList.toggle('hidden', !isAdmin);
+    $('admin-arrow').innerHTML = isAdmin ? '&#9660;' : '&#9654;';
+    if (ownerWrap) {
+      ownerWrap.classList.toggle('hidden', isAdmin || !State.isOwner);
+    }
+    if (ownerAuth) {
+      ownerAuth.disabled = isAdmin || !State.isOwner;
+      ownerAuth.textContent = isAdmin ? '已是管理员' : '房主成为管理员';
+    }
+    $('r-owner').classList.toggle('hidden', !State.isOwner);
+    $('r-owner').textContent = State.isOwner ? '房主' : '房主';
+  },
 };
 
-/* ═══════════════════════════════════════════
-   启动
-═══════════════════════════════════════════ */
 var savedNick = localStorage.getItem('union_nick');
 if (savedNick) State.myName = savedNick;
 

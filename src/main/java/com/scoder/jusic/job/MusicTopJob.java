@@ -89,7 +89,7 @@ public class MusicTopJob {
                     .header("Referer", "https://music.163.com")
                     .header("Upgrade-Insecure-Requests", "1")
                     .method(Connection.Method.GET)
-                    .timeout(200000).get(); // 设置请求头等信息，模拟人工访问，超时时间可自行设置
+                    .timeout(10000).get(); // 失败尽快返回，避免启动或定时任务长时间阻塞
 
             Elements names = doc.select("#song-list-pre-cache a");
 

@@ -10,7 +10,7 @@ import java.nio.file.Paths;
  */
 public final class AvMediaStorage {
 
-    private static final Path MEDIA_DIR = Paths.get(System.getProperty("user.home"), ".jusic-av-media");
+    private static final Path MEDIA_DIR = Paths.get(System.getProperty("user.dir"), "media");
 
     private AvMediaStorage() {
     }

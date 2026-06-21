@@ -1,6 +1,21 @@
 server:
-  port: 8080
+  port: 7888
+  tomcat:
+    max-swallow-size: -1
+  websocket:
+    compression:
+      enabled: false
 spring:
+  resources:
+    static-locations: file:src/main/resources/static/,classpath:/static/
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+      file-size-threshold: 2MB
+      location: ${java.io.tmpdir}
+  profiles:
+    active: ${JUSIC_PROFILE:memory}
   redis:
     host: localhost
     port: 6379
@@ -30,6 +45,7 @@ spring:
             socketFactory:
               class: com.fintech.modules.base.util.mail.MailSSLSocketFactor
 jusic:
+  storage: ${JUSIC_STORAGE:memory}
   music-expire-time: 1200000
   retry-count: 1
   vote-rate: 0.3

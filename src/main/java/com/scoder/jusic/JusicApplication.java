@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class JusicApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(JusicApplication.class, "--debug");
+        SpringApplication.run(JusicApplication.class, args);
     }
 
 }

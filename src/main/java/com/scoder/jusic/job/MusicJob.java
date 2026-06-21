@@ -65,7 +65,7 @@ public class MusicJob {
                 return;
             }
             long pushTime = System.currentTimeMillis();
-            Long duration = music.getDuration() == null ? 300000L : music.getDuration();
+            Long duration = music.getDuration() == null || music.getDuration() <= 0 ? 0L : music.getDuration();
 
             configRepository.setLastMusicPushTimeAndDuration(roomId, pushTime, duration);
             music.setPushTime(pushTime);
@@ -77,10 +77,10 @@ public class MusicJob {
             musicVoteRepository.reset(roomId);
             log.info("已重置投票, 房间: {}", roomId);
             sessionService.sendRoom(roomId, MessageType.MUSIC, Response.success(music, "正在播放"));
-            log.info("已向房间客户端推送音乐, 房间: {}, 音乐: {}, 时长: {}, 推送时间: {}, 链接: {}", roomId, music.getName(), duration, pushTime, music.getUrl());
+            log.info("已向房间客户端推送音乐, 房间: {}, 音乐: {}, 时长: {}, 推送时间: {}", roomId, music.getName(), duration, pushTime);
             LinkedList<Music> result = musicService.getPickList(roomId);
             sessionService.sendRoom(roomId, MessageType.PICK, Response.success(result, "播放列表"));
-            log.info("已向房间客户端推送播放列表, 房间: {}, 共 {} 首, 列表: {}", roomId, result.size(), result);
+            log.info("已向房间客户端推送播放列表, 房间: {}, 共 {} 首", roomId, result.size());
         }
     }
 
@@ -102,7 +102,7 @@ public class MusicJob {
     private boolean isPlayingOver(String roomId) {
         Long lastMusicDuration = configRepository.getLastMusicDuration(roomId);
         Long lastMusicPushTime = configRepository.getLastMusicPushTime(roomId);
-        if (lastMusicDuration != null && lastMusicPushTime != null) {
+        if (lastMusicDuration != null && lastMusicDuration > 0 && lastMusicPushTime != null) {
             return (lastMusicPushTime + lastMusicDuration) - System.currentTimeMillis() <= 0;
         }
         return false;

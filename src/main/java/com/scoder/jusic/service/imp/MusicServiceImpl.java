@@ -77,17 +77,28 @@ public class MusicServiceImpl implements MusicService {
         Music result = null;
         if (musicPickRepository.size(roomId) < 1) {
             String keyword = musicDefaultRepository.randomMember();
+            if (keyword == null) {
+                log.info("默认歌单为空且点歌列表为空, 房间: {}, 跳过", roomId);
+                return null;
+            }
             log.info("选歌列表为空, 房间: {}, 已从默认列表中随机选择一首: {}", roomId, keyword);
             if(keyword.endsWith("___qq")){
                 result = this.getQQMusicById(keyword.substring(0,keyword.length()-5));
             }else{
                 result = this.getMusic(keyword);
             }
-            while(result == null || result.getUrl() == null){
-                log.info("该歌曲url为空:{}, 房间:{}", keyword, roomId);
+            int retries = 0;
+            while((result == null || result.getUrl() == null) && retries < 3){
+                retries++;
+                log.info("该歌曲url为空:{}, 房间:{}, 重试:{}/3", keyword, roomId, retries);
                 keyword = musicDefaultRepository.randomMember();
+                if (keyword == null) break;
                 log.info("选歌列表为空, 房间: {}, 已从默认列表中随机选择一首: {}", roomId, keyword);
                 result = this.getMusic(keyword);
+            }
+            if (result == null || result.getUrl() == null) {
+                log.warn("默认歌单中所有歌曲均无法获取URL, 房间: {}, 外部音乐服务可能不可用", roomId);
+                return null;
             }
             result.setPickTime(System.currentTimeMillis());
             result.setNickName("system");
@@ -98,8 +109,10 @@ public class MusicServiceImpl implements MusicService {
         if (result == null) {
             return null;
         }
-        // 防止选歌的时间超过音乐链接的有效时长
-        if (!"lz".equals(result.getSource()) && result.getPickTime() + jusicProperties.getMusicExpireTime() <= System.currentTimeMillis()) {
+        // 本地文件不参与远端链接刷新
+        if (!"local".equals(result.getSource())
+                && !"lz".equals(result.getSource())
+                && result.getPickTime() + jusicProperties.getMusicExpireTime() <= System.currentTimeMillis()) {
             String musicUrl;
             if("qq".equals(result.getSource())){
                 musicUrl = this.getQQMusicUrl(result.getId());

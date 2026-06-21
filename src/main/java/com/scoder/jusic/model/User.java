@@ -47,11 +47,12 @@ public class User implements Serializable {
     private Long lastMessageTime;
 
     public String getNickName() {
-        StringBuilder nickName = new StringBuilder();
-        nickName.append(this.name)
-                .append("(")
-                .append(StringUtils.desensitizeIPV4(this.remoteAddress))
-                .append(")");
-        return nickName.toString();
+        if (this.name != null && !"".equals(this.name.trim())) {
+            return this.name.trim();
+        }
+        if (this.remoteAddress != null && !"".equals(this.remoteAddress.trim())) {
+            return StringUtils.desensitizeIPV4(this.remoteAddress.trim());
+        }
+        return "匿名";
     }
 }

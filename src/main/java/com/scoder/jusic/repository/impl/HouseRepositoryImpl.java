@@ -6,6 +6,7 @@ import com.scoder.jusic.repository.HouseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.context.annotation.Profile;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +17,7 @@ import java.util.Set;
  * @author H
  */
 @Repository
+@Profile("redis")
 public class HouseRepositoryImpl implements HouseRepository {
 
     @Autowired
